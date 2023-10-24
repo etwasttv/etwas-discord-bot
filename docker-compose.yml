@@ -1,0 +1,13 @@
+version: '4'
+
+services:
+  bot:
+    build: ./
+    tty: true
+    volumes:
+      - ./bot/:/workspace/bot:delegated
+      - node-modules:/workspace/bot/node_modules
+    working_dir: /workspace/bot
+
+volumes:
+  node-modules:
