@@ -1,5 +1,11 @@
 import { readdir } from 'fs/promises';
-import { Client, Collection, CommandInteraction, Events, GatewayIntentBits } from 'discord.js';
+import {
+  Client,
+  Collection,
+  CommandInteraction,
+  Events,
+  GatewayIntentBits
+} from 'discord.js';
 
 import { DiscordEventListener, AppCommandHandler } from './lib';
 
@@ -24,10 +30,16 @@ async function addEventListener(): Promise<number> {
 
     if (listener.once) {
       //  一度だけ実行するイベント
-      CLIENT.once((listener.eventName as string), (...args) => listener.execute(...args));
+      CLIENT.once(
+        (listener.eventName as string),
+        (...args) => listener.execute(...args)
+      );
     } else {
       //  毎回実行するイベント
-      CLIENT.on((listener.eventName as string), (...args) => listener.execute(...args));
+      CLIENT.on(
+        (listener.eventName as string),
+        (...args) => listener.execute(...args)
+      );
     }
   }));
 
@@ -40,7 +52,7 @@ async function addCommandHandler(): Promise<number> {
   const files = await readdir('./commands');
 
   await Promise.all(files.map(async file => {
-    const { handler } = await import(`./comands/${file}`);
+    const { handler } = await import(`./commands/${file}`);
 
     if (!(handler instanceof AppCommandHandler)) return;
 
@@ -50,7 +62,7 @@ async function addCommandHandler(): Promise<number> {
   CLIENT.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isCommand()) return;
 
-    if (!interaction.user.bot) return;
+    if (interaction.user.bot) return;
 
     const handler = handlers.get(interaction.commandName);
 
@@ -77,7 +89,8 @@ async function main() {
   }
 
   //  イベントを読み込む
-  const [eventNum, commandNum] = await Promise.all([addEventListener(), addCommandHandler()]);
+  const [eventNum, commandNum]
+    = await Promise.all([addEventListener(), addCommandHandler()]);
   console.log(`${eventNum} 個のイベント，${commandNum} 個のコマンドを登録しました`);
 
   //  ログイン
