@@ -7,6 +7,7 @@ import {
   joinVC,
 } from '../services/reading';
 import { getVoiceChannel } from '../lib/utils';
+import { sendTextToRoom } from '../services/room';
 
 export const handler = new AppCommandHandler(
   new SlashCommandBuilder()
@@ -35,12 +36,16 @@ export const handler = new AppCommandHandler(
       leaveVC(voiceChannel);
       await interaction.reply({
         content: '専用チャンネルの読み上げを終了します',
+        ephemeral: true,
       });
+      await sendTextToRoom(voiceChannel, 'このチャンネルの読み上げを終了します');
     } else {
       joinVC(voiceChannel);
       await interaction.reply({
         content: '専用チャンネルの読み上げを開始します',
+        ephemeral: true,
       });
+      await sendTextToRoom(voiceChannel, 'このチャンネルの読み上げを開始します');
     }
   },
 );

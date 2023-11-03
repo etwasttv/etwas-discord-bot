@@ -8,6 +8,8 @@ export const listener = new DiscordEventListener(
   async (before: VoiceState, after: VoiceState) => {
     if (before.member?.user.bot || after.member?.user.bot) return;
 
+    if (before.channelId === after.channelId) return;
+
     if (before.channel instanceof VoiceChannel && before.member) {
       await leaveMember(before.channel, before.member);
     }

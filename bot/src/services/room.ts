@@ -12,8 +12,23 @@ import {
 } from 'discord.js';
 import { prisma } from '../lib/prisma';
 import { Room } from '@prisma/client';
+import { leaveVC } from './reading';
 
 const LOCK = new AsyncLock();
+
+export async function sendTextToRoom(voiceChannel: VoiceChannel, text: string) {
+  const room = await prisma.room.findUnique({
+    where: {
+      voiceChannelId: voiceChannel.id,
+    }
+  });
+
+  if (!room || !room.textChannelId) return;
+
+  const textChannel = <TextChannel>await voiceChannel.guild.channels.fetch(room.textChannelId);
+  if (!textChannel) return;
+  textChannel.send(text);
+}
 
 export async function joinMember(
   voiceChannel: VoiceChannel,
@@ -125,6 +140,7 @@ export async function leaveMember(
         = await Promise.all([textChannelTask, roleTask]);
 
       if (deleteRoom) {
+        leaveVC(voiceChannel);
         if (textChannel) tasks.push(textChannel.delete());
         if (role) tasks.push(role.delete());
         tasks.push(tx.room.update({
