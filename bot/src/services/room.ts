@@ -201,7 +201,21 @@ async function createRoomTextChannel(voiceChannel: VoiceChannel) {
   guildMembers.filter(member => member.user.bot)
       .forEach((bot, _id) => permissionOverwrites.push({
         id: bot,
-        allow: [ PermissionsBitField.Default ]
+        allow: [
+          PermissionsBitField.Flags.ViewChannel,
+          PermissionsBitField.Flags.SendMessages,
+          PermissionsBitField.Flags.SendMessagesInThreads,
+          PermissionsBitField.Flags.CreatePublicThreads,
+          PermissionsBitField.Flags.EmbedLinks,
+          PermissionsBitField.Flags.AttachFiles,
+          PermissionsBitField.Flags.AddReactions,
+          PermissionsBitField.Flags.UseExternalEmojis,
+          PermissionsBitField.Flags.UseExternalStickers,
+          PermissionsBitField.Flags.MentionEveryone,
+          PermissionsBitField.Flags.ReadMessageHistory,
+          PermissionsBitField.Flags.UseApplicationCommands,
+          PermissionsBitField.Flags.SendVoiceMessages,
+        ]
       }));
 
   return voiceChannel.guild.channels.create({
