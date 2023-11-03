@@ -3,6 +3,8 @@ version: '4'
 networks:
   database:
     driver: bridge
+  voicevox:
+    driver: bridge
 
 services:
   bot:
@@ -14,6 +16,7 @@ services:
     working_dir: /workspace/bot
     networks:
       - database
+      - voicevox
 
   db:
     image: postgres:latest
@@ -26,6 +29,11 @@ services:
       POSTGRES_DB: discord
     networks:
       - database
+
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    networks:
+      - voicevox
 
 volumes:
   node-modules:
