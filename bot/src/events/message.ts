@@ -2,7 +2,7 @@ import { Events, Message } from "discord.js";
 import { DiscordEventListener } from "../lib"; 
 import { getVoiceChannel } from "../lib/utils";
 import { prisma } from '../lib/prisma';
-import { readText } from "../services/reading";
+import { isOnZundamon, readText } from "../services/reading";
 
 export const listener = new DiscordEventListener(
   Events.MessageCreate,
@@ -24,8 +24,16 @@ export const listener = new DiscordEventListener(
 
     if (!member) return;
 
-    if (member.room?.textChannelId === message.channelId) {
-      await readText(voiceChannel, message.content);
+    if (member.room?.textChannelId !== message.channelId) return;
+    if (await isOnZundamon(voiceChannel)) {
+      await readText(
+        voiceChannel,
+        message.content,
+        member.speakerId,
+        member.speedScale,
+        member.pitchScale,
+        member.intonationScale,
+      );
     }
   },
 );

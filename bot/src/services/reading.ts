@@ -1,4 +1,4 @@
-import { GuildMember, Snowflake, VoiceChannel } from "discord.js";
+import { Snowflake, VoiceChannel } from "discord.js";
 import {
   AudioPlayer,
   joinVoiceChannel,
@@ -28,47 +28,63 @@ export function joinVC(voiceChannel: VoiceChannel) {
   players.set(voiceChannel.id, player);
 }
 
-export async function turnOnSelfYomiage(guildMember: GuildMember) {
-  await prisma.member.upsert({
+export async function turnOnVc(voiceChannel: VoiceChannel) {
+  await prisma.room.upsert({
     where: {
-      id: guildMember.id,
+      voiceChannelId: voiceChannel.id,
     },
     update: {
-      useZunda: true,
+      useZundamon: true,
     },
     create: {
-      id: guildMember.id,
-      useZunda: true,
+      voiceChannelId: voiceChannel.id,
+      useZundamon: true,
     }
   });
+  if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
 }
 
-export async function turnOffSelfYomiage(guildMember: GuildMember) {
-  await prisma.member.upsert({
+export async function turnOffVc(voiceChannel: VoiceChannel) {
+  await prisma.room.upsert({
     where: {
-      id: guildMember.id,
+      voiceChannelId: voiceChannel.id,
     },
     update: {
-      useZunda: false,
+      useZundamon: false,
     },
     create: {
-      id: guildMember.id,
-      useZunda: false,
-    },
+      voiceChannelId: voiceChannel.id,
+      useZundamon: false,
+    }
   });
+
+  if (hasConnection(voiceChannel)) leaveVC(voiceChannel);
 }
 
-export async function readText(voiceChannel: VoiceChannel, text: string) {
-  if (!hasConnection(voiceChannel)) return;
+export async function readText(
+  voiceChannel: VoiceChannel,
+  text: string,
+  speakerId?: number,
+  speedScale?: number,
+  pitchScale?: number,
+  intonationScale?: number,
+) {
+
+  if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
 
   const query = await httpAsync.request(
-    `${ENDPOINT}/audio_query?speaker=1&text=${encodeURIComponent(text)}`,
+    `${ENDPOINT}/audio_query?speaker=${speakerId??3}&text=${encodeURIComponent(text)}`,
     {
       method: 'POST'
     }, null);
 
+  const queryJson = JSON.parse(query.toString());
+  if (speedScale) queryJson['speedScale'] = speedScale;
+  if (pitchScale) queryJson['pitchScale'] = pitchScale;
+  if (intonationScale) queryJson['intonationScale'] = intonationScale;
+
   const buffer = await httpAsync.request(
-    `${ENDPOINT}/synthesis?speaker=1`,
+    `${ENDPOINT}/synthesis?speaker=${speakerId??3}`,
     {
       method: 'POST',
       headers: {
@@ -85,6 +101,15 @@ export async function readText(voiceChannel: VoiceChannel, text: string) {
 export function hasConnection(voiceChannel: VoiceChannel) {
   const connection = getVoiceConnection(voiceChannel.guildId, voiceChannel.id);
   return !!connection;
+}
+
+export async function isOnZundamon(voiceChannel: VoiceChannel) {
+  const room = await prisma.room.findUnique({
+    where: {
+      voiceChannelId: voiceChannel.id,
+    }
+  });
+  return room && room.useZundamon;
 }
 
 export function leaveVC(voiceChannel: VoiceChannel) {
