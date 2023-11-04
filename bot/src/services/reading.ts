@@ -36,6 +36,12 @@ function getFreeClient(guildId: Snowflake) {
   }
 }
 
+function releaseClient(guildId: Snowflake, clientId: Snowflake) {
+  const usedClients = CLIENT_CONNECTIONS.get(guildId);
+  if (!usedClients) return;
+  usedClients.delete(clientId);
+}
+
 export async function joinVC(voiceChannelId: string, guildId: string) {
   const client = getFreeClient(guildId);
 
@@ -45,6 +51,11 @@ export async function joinVC(voiceChannelId: string, guildId: string) {
   }
 
   const guild = await client.guilds.fetch(guildId);
+  const voiceChannel = <VoiceChannel>(await guild.channels.fetch(voiceChannelId));
+  if (voiceChannel.members.every(m => m.user.bot)) {
+    releaseClient(guildId, client.user.id);
+    return;
+  }
 
   const connection = joinVoiceChannel({
     channelId: voiceChannelId,
@@ -91,6 +102,8 @@ export async function turnOffVc(voiceChannelId: Snowflake, guildId: Snowflake) {
   if (hasConnection(voiceChannelId, guildId)) await leaveVC(voiceChannelId, guildId);
 }
 
+const URL = new RegExp('https?://[\\w!?/+\\-_~;.,*&@#=$%()\'[\\]]+', 'g');
+
 export async function readText(
   voiceChannelId: Snowflake,
   guildId: Snowflake,
@@ -103,8 +116,10 @@ export async function readText(
 
   if (!hasConnection(voiceChannelId, guildId)) await joinVC(voiceChannelId, guildId);
 
+  const fixedText = text.replaceAll(URL, 'URL省略');
+
   const query = await httpAsync.request(
-    `${ENDPOINT}/audio_query?speaker=${speakerId??3}&text=${encodeURIComponent(text)}`,
+    `${ENDPOINT}/audio_query?speaker=${speakerId??3}&text=${encodeURIComponent(fixedText)}`,
     {
       method: 'POST'
     }, null);
