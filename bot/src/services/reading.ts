@@ -1,4 +1,4 @@
-import { Snowflake, VoiceChannel } from "discord.js";
+import { GuildMember, Snowflake, VoiceChannel } from "discord.js";
 import {
   AudioPlayer,
   joinVoiceChannel,
@@ -9,6 +9,7 @@ import {
 
 import httpAsync from '../lib/http-async';
 import { Readable } from "stream";
+import { prisma } from "../lib/prisma";
 
 const ENDPOINT = 'http://voicevox:50021';
 
@@ -25,6 +26,36 @@ export function joinVC(voiceChannel: VoiceChannel) {
   const player = createAudioPlayer();
   connection.subscribe(player);
   players.set(voiceChannel.id, player);
+}
+
+export async function turnOnSelfYomiage(guildMember: GuildMember) {
+  await prisma.member.upsert({
+    where: {
+      id: guildMember.id,
+    },
+    update: {
+      useZunda: true,
+    },
+    create: {
+      id: guildMember.id,
+      useZunda: true,
+    }
+  });
+}
+
+export async function turnOffSelfYomiage(guildMember: GuildMember) {
+  await prisma.member.upsert({
+    where: {
+      id: guildMember.id,
+    },
+    update: {
+      useZunda: false,
+    },
+    create: {
+      id: guildMember.id,
+      useZunda: false,
+    },
+  });
 }
 
 export async function readText(voiceChannel: VoiceChannel, text: string) {
