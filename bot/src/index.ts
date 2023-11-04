@@ -1,6 +1,5 @@
 import { readdir } from 'fs/promises';
 import {
-  ButtonInteraction,
   Client,
   Collection,
   CommandInteraction,
@@ -10,7 +9,7 @@ import {
 
 import { DiscordEventListener, AppCommandHandler, ComponentHandler } from './lib';
 
-import { bot_token as TOKEN } from './config.json';
+import { bot_info as BOTINFO } from './config.json';
 
 const CLIENT = new Client({
   intents: [
@@ -22,6 +21,8 @@ const CLIENT = new Client({
     GatewayIntentBits.MessageContent,
   ]
 });
+
+export const CLIENTS = [CLIENT];
 
 async function addEventListener(): Promise<number> {
   const files = await readdir('./events');
@@ -111,7 +112,7 @@ async function addCommandHandler(): Promise<number> {
 }
 
 async function main() {
-  if (!TOKEN) {
+  if (!BOTINFO[0].bot_token) {
     console.log('TOKEN を指定して下さい');
     return;
   }
@@ -123,7 +124,13 @@ async function main() {
 
   //  ログイン
   console.log('Discord Botを起動します');
-  CLIENT.login(TOKEN);
+  CLIENT.login(BOTINFO[0].bot_token);
+
+  for (let i=1; i<BOTINFO.length; i++) {
+    const c = new Client({intents: []});
+    c.login(BOTINFO[i].bot_token);
+    CLIENTS.push(c);
+  }
 }
 
 main();

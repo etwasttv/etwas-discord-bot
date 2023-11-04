@@ -23,6 +23,6 @@ export const handler = new ComponentHandler(
     });
 
     const voiceChannel = <VoiceChannel>(await interaction.guild.channels.fetch(room.voiceChannelId));
-    await turnOffVc(voiceChannel);
+    await turnOffVc(voiceChannel.id, voiceChannel.guildId);
   }
 );

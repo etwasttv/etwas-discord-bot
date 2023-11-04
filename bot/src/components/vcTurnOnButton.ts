@@ -23,6 +23,10 @@ export const handler = new ComponentHandler(
     });
 
     const voiceChannel = <VoiceChannel>(await interaction.guild.channels.fetch(room.voiceChannelId));
-    await turnOnVc(voiceChannel);
+    try {
+      await turnOnVc(voiceChannel.id, voiceChannel.guildId);
+    } catch (err) {
+      interaction.reply('他のチャンネルでBotが使われているようです');
+    }
   }
 );
