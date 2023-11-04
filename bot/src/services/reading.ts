@@ -13,28 +13,36 @@ import { prisma } from "../lib/prisma";
 import { CLIENTS } from "..";
 
 const CLIENT_CONNECTIONS = new Map<Snowflake, Set<Snowflake>>();
-const CONNECTION_QUEUE: { voiceChannelId: Snowflake, guildId: Snowflake }[] = [];
+const WAITING_QUEUE = new Map<Snowflake, Array<Snowflake>>();
 
 const ENDPOINT = 'http://voicevox:50021';
 
 const players = new Map<Snowflake, AudioPlayer>();
 
-export async function joinVC(voiceChannelId: string, guildId: string) {
+function getFreeClient(guildId: Snowflake) {
   const usedClients = CLIENT_CONNECTIONS.get(guildId);
-  const client = CLIENTS.find(c => {
-    if (!c.user) return false;
-    if (!usedClients) return true;
-    return !usedClients.has(c.user.id);
-  });
-
-  if (!client || !client.user){
-    CONNECTION_QUEUE.push({voiceChannelId, guildId});
-    throw new Error('bot busy');
+  if (!usedClients) {
+    const client = CLIENTS.find(c => c.user?.id);
+    if (!client || !client.user) return null;
+    CLIENT_CONNECTIONS.set(guildId, new Set([client.user.id]));
+    return client;
   }
 
-  if (!usedClients)
-    CLIENT_CONNECTIONS.set(guildId, new Set<Snowflake>([client.user.id, voiceChannelId]));
-  else usedClients.add(client.user.id);
+  for (const client of CLIENTS) {
+    if (!client.user) continue;
+    if (usedClients.has(client.user.id)) continue;
+    usedClients.add(client.user.id);
+    return client;
+  }
+}
+
+export async function joinVC(voiceChannelId: string, guildId: string) {
+  const client = getFreeClient(guildId);
+
+  if (!client || !client.user){
+    addWaitingQueue(voiceChannelId, guildId);
+    throw new Error('bot busy');
+  }
 
   const guild = await client.guilds.fetch(guildId);
 
@@ -151,8 +159,25 @@ export async function handleLeaveVC(client: Client, guildId: Snowflake) {
   if (usedClients && client.user) {
     usedClients.delete(client.user.id);
   }
-  const next = CONNECTION_QUEUE.shift();
+  const next = getWaitingQueue(guildId);
   if (next) {
-    await joinVC(next.voiceChannelId, next.guildId);
+    await joinVC(next, guildId);
   }
+}
+
+function addWaitingQueue(voiceChannelId: Snowflake, guildId: Snowflake) {
+  let queue = WAITING_QUEUE.get(guildId);
+  if (!queue) {
+    queue = new Array<Snowflake>(voiceChannelId);
+    WAITING_QUEUE.set(guildId, queue);
+  } else {
+    if (queue.every(v => v !== voiceChannelId)) {
+      queue.push(voiceChannelId);
+    }
+  }
+}
+
+function getWaitingQueue(guildId: Snowflake) {
+  const queue = WAITING_QUEUE.get(guildId);
+  return queue?.shift();
 }
