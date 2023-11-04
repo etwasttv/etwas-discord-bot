@@ -13,6 +13,7 @@ import {
 import { prisma } from '../lib/prisma';
 import { Room } from '@prisma/client';
 import { leaveVC } from './reading';
+import { truncate } from 'fs';
 
 const LOCK = new AsyncLock();
 
@@ -27,7 +28,7 @@ export async function sendTextToRoom(voiceChannel: VoiceChannel, text: string) {
 
   const textChannel = <TextChannel>await voiceChannel.guild.channels.fetch(room.textChannelId);
   if (!textChannel) return;
-  textChannel.send(text);
+  await textChannel.send(text);
 }
 
 export async function joinMember(
@@ -173,6 +174,18 @@ async function findOrCreateRoom(room: Room, voiceChannel: VoiceChannel) {
 
   await textChannel.permissionOverwrites.edit(role, {
     ViewChannel: true,
+    SendMessages: true,
+    SendMessagesInThreads: true,
+    CreatePublicThreads: true,
+    EmbedLinks: true,
+    AttachFiles: true,
+    AddReactions: true,
+    UseExternalEmojis: true,
+    UseExternalStickers: true,
+    MentionEveryone: true,
+    ReadMessageHistory: true,
+    UseApplicationCommands: true,
+    SendVoiceMessages: true,
   });
 
   return {textChannel, role};
@@ -218,12 +231,18 @@ async function createRoomTextChannel(voiceChannel: VoiceChannel) {
         ]
       }));
 
-  return voiceChannel.guild.channels.create({
-    name: `${voiceChannel.name}のためのTextChannnel`,
+  const channel = await voiceChannel.guild.channels.create({
+    name: `通話用テキストチャンネル`,
     type: ChannelType.GuildText,
     permissionOverwrites: permissionOverwrites,
     parent: voiceChannel.parent,
   });
+
+  await channel.send(`このチャンネルは${voiceChannel.url}に入っている人だけに表示されます\n`
+                    +'`/vc`でこのチャンネルの読み上げをON/OFFできます\n'
+                    +'`/vcself`で自身の読み上げをONにしている場合は常に読み上げられます');
+
+  return channel;
 }
 
 async function findOrCreateRoomRole(
