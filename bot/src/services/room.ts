@@ -1,6 +1,7 @@
 import AsyncLock from 'async-lock';
 import {
   ChannelType,
+  Client,
   GuildBasedChannel,
   GuildMember,
   OverwriteResolvable,
@@ -13,7 +14,6 @@ import {
 import { prisma } from '../lib/prisma';
 import { Room } from '@prisma/client';
 import { leaveVC } from './reading';
-import { truncate } from 'fs';
 
 const LOCK = new AsyncLock();
 
@@ -238,9 +238,7 @@ async function createRoomTextChannel(voiceChannel: VoiceChannel) {
     parent: voiceChannel.parent,
   });
 
-  await channel.send(`このチャンネルは${voiceChannel.url}に入っている人だけに表示されます\n`
-                    +'`/vc`でこのチャンネルの読み上げをON/OFFできます\n'
-                    +'`/vcself`で自身の読み上げをONにしている場合は常に読み上げられます');
+  await channel.send(`このチャンネルは${voiceChannel.url}に入っている人だけに表示されます\n`);
 
   return channel;
 }
@@ -259,4 +257,36 @@ async function createRoomRole(voiceChannel: VoiceChannel) {
     name: `${voiceChannel.name} member`,
     reason: `${voiceChannel.name} member`
   });
+}
+
+export async function checkAll(client: Client) {
+  const guilds = await client.guilds.fetch();
+  for (const [_1, oA2guild] of guilds) {
+    const guild = await oA2guild.fetch();
+    const channels = (await guild.channels.fetch()).filter(ch => ch instanceof VoiceChannel);
+    for (const [_2, voiceChannel] of channels) {
+      if (voiceChannel) await checkVoiceChannel(<VoiceChannel>voiceChannel);
+    }
+  }
+}
+
+async function checkVoiceChannel(voiceChannel: VoiceChannel) {
+  const members = await prisma.member.findMany({
+    where: {
+      room: {
+        voiceChannelId: voiceChannel.id,
+      }
+    }
+  });
+
+  for (const member of members) {
+    if (!voiceChannel.members.has(member.id)) {
+      const guildMember = await voiceChannel.guild.members.fetch(member.id);
+      if (guildMember) await leaveMember(voiceChannel, guildMember);
+    }
+  }
+
+  for (const [_, guildMember] of voiceChannel.members.filter(m => !m.user.bot)) {
+    await joinMember(voiceChannel, guildMember);
+  }
 }
