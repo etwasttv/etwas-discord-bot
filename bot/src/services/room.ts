@@ -13,6 +13,7 @@ import {
 import { prisma } from '../lib/prisma';
 import { Room } from '@prisma/client';
 import { leaveVC } from './reading';
+import { truncate } from 'fs';
 
 const LOCK = new AsyncLock();
 
@@ -173,6 +174,18 @@ async function findOrCreateRoom(room: Room, voiceChannel: VoiceChannel) {
 
   await textChannel.permissionOverwrites.edit(role, {
     ViewChannel: true,
+    SendMessages: true,
+    SendMessagesInThreads: true,
+    CreatePublicThreads: true,
+    EmbedLinks: true,
+    AttachFiles: true,
+    AddReactions: true,
+    UseExternalEmojis: true,
+    UseExternalStickers: true,
+    MentionEveryone: true,
+    ReadMessageHistory: true,
+    UseApplicationCommands: true,
+    SendVoiceMessages: true,
   });
 
   return {textChannel, role};
