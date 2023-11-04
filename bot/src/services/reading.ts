@@ -15,7 +15,7 @@ const ENDPOINT = 'http://voicevox:50021';
 
 const players = new Map<Snowflake, AudioPlayer>();
 
-export function joinVC(voiceChannel: VoiceChannel) {
+export async function joinVC(voiceChannel: VoiceChannel) {
   const connection = joinVoiceChannel({
     channelId: voiceChannel.id,
     guildId: voiceChannel.guildId,
@@ -23,9 +23,31 @@ export function joinVC(voiceChannel: VoiceChannel) {
     adapterCreator: voiceChannel.guild.voiceAdapterCreator,
   });
 
+  await prisma.room.upsert({
+    where: {
+      voiceChannelId: voiceChannel.id,
+    },
+    update: {
+      useZundamon: true,
+    },
+    create: {
+      voiceChannelId: voiceChannel.id,
+      useZundamon: true,
+    }
+  });
+
   const player = createAudioPlayer();
   connection.subscribe(player);
   players.set(voiceChannel.id, player);
+}
+
+export async function checkSelfYomiage(guildMember: GuildMember) {
+  const member = await prisma.member.findUnique({
+    where: {
+      id: guildMember.id,
+    }
+  });
+  return member && member.useZunda;
 }
 
 export async function turnOnSelfYomiage(guildMember: GuildMember) {
@@ -59,8 +81,6 @@ export async function turnOffSelfYomiage(guildMember: GuildMember) {
 }
 
 export async function readText(voiceChannel: VoiceChannel, text: string) {
-  if (!hasConnection(voiceChannel)) return;
-
   const query = await httpAsync.request(
     `${ENDPOINT}/audio_query?speaker=1&text=${encodeURIComponent(text)}`,
     {
@@ -87,9 +107,31 @@ export function hasConnection(voiceChannel: VoiceChannel) {
   return !!connection;
 }
 
-export function leaveVC(voiceChannel: VoiceChannel) {
+export async function isOnZundamon(voiceChannel: VoiceChannel) {
+  const room = await prisma.room.findUnique({
+    where: {
+      voiceChannelId: voiceChannel.id,
+    }
+  });
+  return room && room.useZundamon;
+}
+
+export async function leaveVC(voiceChannel: VoiceChannel) {
   const connection = getVoiceConnection(voiceChannel.guildId, voiceChannel.id);
   if (connection) connection.destroy();
+
+  await prisma.room.upsert({
+    where: {
+      voiceChannelId: voiceChannel.id,
+    },
+    update: {
+      useZundamon: false,
+    },
+    create: {
+      voiceChannelId: voiceChannel.id,
+      useZundamon: false,
+    }
+  });
 
   const player = players.get(voiceChannel.id);
   if (player) {

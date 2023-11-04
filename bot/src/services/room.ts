@@ -141,7 +141,7 @@ export async function leaveMember(
         = await Promise.all([textChannelTask, roleTask]);
 
       if (deleteRoom) {
-        leaveVC(voiceChannel);
+        await leaveVC(voiceChannel);
         if (textChannel) tasks.push(textChannel.delete());
         if (role) tasks.push(role.delete());
         tasks.push(tx.room.update({

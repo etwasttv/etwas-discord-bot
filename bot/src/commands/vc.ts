@@ -33,14 +33,14 @@ export const handler = new AppCommandHandler(
     }
 
     if (hasConnection(voiceChannel)) {
-      leaveVC(voiceChannel);
+      await leaveVC(voiceChannel);
       await interaction.reply({
         content: '専用チャンネルの読み上げを終了します',
         ephemeral: true,
       });
       await sendTextToRoom(voiceChannel, 'このチャンネルの読み上げを終了します');
     } else {
-      joinVC(voiceChannel);
+      await joinVC(voiceChannel);
       await interaction.reply({
         content: '専用チャンネルの読み上げを開始します',
         ephemeral: true,
