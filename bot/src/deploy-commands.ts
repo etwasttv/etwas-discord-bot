@@ -1,5 +1,5 @@
 import fs from "fs";
-import { bot_token as TOKEN, client_id as CLIENT_ID } from "./config.json";
+import { bot_info as BOTINFO } from "./config.json";
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -10,7 +10,7 @@ import { AppCommandHandler } from "./lib";
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
-  const rest = new REST({ version: "10" }).setToken(TOKEN);
+  const rest = new REST({ version: "10" }).setToken(BOTINFO[0].bot_token);
   const commandFiles = fs.readdirSync("./commands");
 
   await Promise.all(commandFiles.map((file) => 
@@ -21,7 +21,7 @@ import { AppCommandHandler } from "./lib";
 
   console.log(commands);
 
-  await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands })
+  await rest.put(Routes.applicationCommands(BOTINFO[0].client_id), { body: commands })
     .then(() => console.log(`Registered ${commands.length} application commands.`))
     .catch(console.error);
 })();
