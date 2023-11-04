@@ -1,8 +1,13 @@
 import {
+  AnySelectMenuInteraction,
   Awaitable,
+  ButtonBuilder,
+  ButtonInteraction,
   CommandInteraction,
+  Interaction,
   SlashCommandBuilder,
-  SlashCommandSubcommandsOnlyBuilder
+  SlashCommandSubcommandsOnlyBuilder,
+  StringSelectMenuInteraction
 } from "discord.js";
 
 export class DiscordEventListener {
@@ -32,6 +37,18 @@ export class AppCommandHandler {
     handler: (interaction: CommandInteraction) => Promise<void>
   ) {
     this.data = data;
+    this.handler = handler;
+  }
+}
+
+export class ComponentHandler {
+  id: string;
+  handler: (interaction: ButtonInteraction|StringSelectMenuInteraction) => Promise<void>;
+  constructor(
+    id: string,
+    handler: (interaction: ButtonInteraction|StringSelectMenuInteraction) => Promise<void>,
+  ) {
+    this.id = id;
     this.handler = handler;
   }
 }

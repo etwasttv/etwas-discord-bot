@@ -1,13 +1,9 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder } from 'discord.js';
 
 import { AppCommandHandler } from '../lib';
-import {
-  hasConnection,
-  leaveVC,
-  joinVC,
-} from '../services/reading';
-import { getVoiceChannel } from '../lib/utils';
-import { sendTextToRoom } from '../services/room';
+import { prisma } from '../lib/prisma';
+import { VcTurnOffButton } from '../components/vcTurnOffButton';
+import { VcTurnOnButton } from '../components/vcTurnOnButton';
 
 export const handler = new AppCommandHandler(
   new SlashCommandBuilder()
@@ -23,29 +19,25 @@ export const handler = new AppCommandHandler(
       return;
     }
 
-    const voiceChannel = await getVoiceChannel(interaction.guild, interaction.user.id);
-    if (!voiceChannel) {
+    const room = await prisma.room.findUnique({
+      where: {
+        textChannelId: interaction.channelId,
+      }
+    });
+
+    if (!room) {
       await interaction.reply({
-        content: 'ボイスチャンネルから実行してください',
+        content: 'このチャンネルを読み上げることはできません\n通話用チャンネルで実行してください',
         ephemeral: true,
       });
       return;
     }
 
-    if (hasConnection(voiceChannel)) {
-      leaveVC(voiceChannel);
-      await interaction.reply({
-        content: '専用チャンネルの読み上げを終了します',
-        ephemeral: true,
-      });
-      await sendTextToRoom(voiceChannel, 'このチャンネルの読み上げを終了します');
-    } else {
-      joinVC(voiceChannel);
-      await interaction.reply({
-        content: '専用チャンネルの読み上げを開始します',
-        ephemeral: true,
-      });
-      await sendTextToRoom(voiceChannel, 'このチャンネルの読み上げを開始します');
-    }
+    const button = room.useZundamon ? VcTurnOffButton : VcTurnOnButton;
+
+    await interaction.reply({
+      content: '🗣️読み上げ設定',
+      components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)]
+    });
   },
 );
