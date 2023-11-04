@@ -61,18 +61,30 @@ export async function turnOffVc(voiceChannel: VoiceChannel) {
   if (hasConnection(voiceChannel)) leaveVC(voiceChannel);
 }
 
-export async function readText(voiceChannel: VoiceChannel, text: string) {
+export async function readText(
+  voiceChannel: VoiceChannel,
+  text: string,
+  speakerId?: number,
+  speedScale?: number,
+  pitchScale?: number,
+  intonationScale?: number,
+) {
 
   if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
 
   const query = await httpAsync.request(
-    `${ENDPOINT}/audio_query?speaker=1&text=${encodeURIComponent(text)}`,
+    `${ENDPOINT}/audio_query?speaker=${speakerId??3}&text=${encodeURIComponent(text)}`,
     {
       method: 'POST'
     }, null);
 
+  const queryJson = JSON.parse(query.toString());
+  if (speedScale) queryJson['speedScale'] = speedScale;
+  if (pitchScale) queryJson['pitchScale'] = pitchScale;
+  if (intonationScale) queryJson['intonationScale'] = intonationScale;
+
   const buffer = await httpAsync.request(
-    `${ENDPOINT}/synthesis?speaker=1`,
+    `${ENDPOINT}/synthesis?speaker=${speakerId??3}`,
     {
       method: 'POST',
       headers: {

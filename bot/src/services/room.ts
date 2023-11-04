@@ -2,7 +2,6 @@ import AsyncLock from 'async-lock';
 import {
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   Client,
   GuildBasedChannel,
@@ -86,10 +85,14 @@ export async function joinMember(
       await guildMember.roles.add(role);
 
       if (member.room.textChannelId !== textChannel.id) {
-        await textChannel.send(`このチャンネルは${voiceChannel.url}に入っている人だけに表示されます\n`);
+        await textChannel.send({
+          content: `このチャンネルは${voiceChannel.url}に入っている人だけに表示されます`,
+        });
         if (member.room.useZundamon) {
           joinVC(voiceChannel);
-          await textChannel.send(`このチャンネルの内容は${voiceChannel.url}で読み上げられます`);
+          await textChannel.send({
+            content: `このチャンネルの内容は${voiceChannel.url}で読み上げられます`,
+          });
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(VcTurnOffButton);
           await textChannel.send({
             content: `🗣️読み上げ設定`,

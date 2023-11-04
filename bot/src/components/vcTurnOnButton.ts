@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, VoiceChannel } from "discord.js";
-import { ButtonHandler } from "../lib";
+import { ComponentHandler } from "../lib";
 import { VcTurnOffButton } from './vcTurnOffButton';
 import { turnOnVc } from "../services/reading";
 import { prisma } from "../lib/prisma";
@@ -9,11 +9,9 @@ export const VcTurnOnButton = new ButtonBuilder()
     .setLabel('読み上げONにする')
     .setStyle(ButtonStyle.Success);
 
-export const handler = new ButtonHandler(
+export const handler = new ComponentHandler(
   'vc-turn-on',
   async (interaction) => {
-    console.log(interaction);
-
     const room = await prisma.room.findUnique({
       where: {
         textChannelId: interaction.channelId,

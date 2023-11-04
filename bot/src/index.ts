@@ -8,7 +8,7 @@ import {
   GatewayIntentBits
 } from 'discord.js';
 
-import { DiscordEventListener, AppCommandHandler, ButtonHandler } from './lib';
+import { DiscordEventListener, AppCommandHandler, ComponentHandler } from './lib';
 
 import { bot_token as TOKEN } from './config.json';
 
@@ -50,7 +50,6 @@ async function addEventListener(): Promise<number> {
 
 async function addCommandHandler(): Promise<number> {
   const handlers = new Collection<string, AppCommandHandler>();
-
   const files = await readdir('./commands');
 
   await Promise.all(files.map(async file => {
@@ -61,22 +60,24 @@ async function addCommandHandler(): Promise<number> {
     handlers.set(handler.data.name, handler);
   }));
 
-  const bHandlers = new Collection<string, ButtonHandler>();
+  const bHandlers = new Collection<string, ComponentHandler>();
   const bFiles = await readdir('./components');
 
   await Promise.all(bFiles.map(async file => {
     const { handler } = await import(`./components/${file}`);
-    if (!(handler instanceof ButtonHandler)) return;
+    if (!(handler instanceof ComponentHandler)) return;
 
     bHandlers.set(handler.id, handler);
   }))
 
   CLIENT.on(Events.InteractionCreate, async interaction => {
-    if (interaction.isButton()) {
+    if (interaction.isButton() || interaction.isStringSelectMenu()) {
       const handler = bHandlers.get(interaction.customId);
-      if (!handler) return;
+      if (!handler) {
+        return;
+      }
       try {
-        await handler.handler(<ButtonInteraction>interaction);
+        await handler.handler(interaction);
       } catch (err) {
         console.error(err);
         await interaction.reply({
