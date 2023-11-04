@@ -1,4 +1,8 @@
 {
-    "bot_token": "<your bot token>",
-    "client_id": "<your bot client id>"
+    "bot_info": [
+        {
+            "bot_token": "<your bot token>",
+            "client_id": "<your bot client id>"
+        }
+    ]
 }

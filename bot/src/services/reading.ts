@@ -1,4 +1,4 @@
-import { Snowflake, VoiceChannel } from "discord.js";
+import { Client, Snowflake, VoiceChannel } from "discord.js";
 import {
   AudioPlayer,
   joinVoiceChannel,
@@ -10,59 +10,90 @@ import {
 import httpAsync from '../lib/http-async';
 import { Readable } from "stream";
 import { prisma } from "../lib/prisma";
+import { CLIENTS } from "..";
+
+const CLIENT_CONNECTIONS = new Map<Snowflake, Set<Snowflake>>();
+const WAITING_QUEUE = new Map<Snowflake, Array<Snowflake>>();
 
 const ENDPOINT = 'http://voicevox:50021';
 
 const players = new Map<Snowflake, AudioPlayer>();
 
-export function joinVC(voiceChannel: VoiceChannel) {
+function getFreeClient(guildId: Snowflake) {
+  const usedClients = CLIENT_CONNECTIONS.get(guildId);
+  if (!usedClients) {
+    const client = CLIENTS.find(c => c.user?.id);
+    if (!client || !client.user) return null;
+    CLIENT_CONNECTIONS.set(guildId, new Set([client.user.id]));
+    return client;
+  }
+
+  for (const client of CLIENTS) {
+    if (!client.user) continue;
+    if (usedClients.has(client.user.id)) continue;
+    usedClients.add(client.user.id);
+    return client;
+  }
+}
+
+export async function joinVC(voiceChannelId: string, guildId: string) {
+  const client = getFreeClient(guildId);
+
+  if (!client || !client.user){
+    addWaitingQueue(voiceChannelId, guildId);
+    throw new Error('bot busy');
+  }
+
+  const guild = await client.guilds.fetch(guildId);
+
   const connection = joinVoiceChannel({
-    channelId: voiceChannel.id,
-    guildId: voiceChannel.guildId,
-    group: voiceChannel.id,
-    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+    channelId: voiceChannelId,
+    guildId: guildId,
+    group: voiceChannelId,
+    adapterCreator: guild.voiceAdapterCreator,
   });
 
   const player = createAudioPlayer();
   connection.subscribe(player);
-  players.set(voiceChannel.id, player);
+  players.set(voiceChannelId, player);
 }
 
-export async function turnOnVc(voiceChannel: VoiceChannel) {
+export async function turnOnVc(voiceChannelId: Snowflake, guildId: Snowflake) {
   await prisma.room.upsert({
     where: {
-      voiceChannelId: voiceChannel.id,
+      voiceChannelId: voiceChannelId,
     },
     update: {
       useZundamon: true,
     },
     create: {
-      voiceChannelId: voiceChannel.id,
+      voiceChannelId: voiceChannelId,
       useZundamon: true,
     }
   });
-  if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
+  if (!hasConnection(voiceChannelId, guildId)) await joinVC(voiceChannelId, guildId);
 }
 
-export async function turnOffVc(voiceChannel: VoiceChannel) {
+export async function turnOffVc(voiceChannelId: Snowflake, guildId: Snowflake) {
   await prisma.room.upsert({
     where: {
-      voiceChannelId: voiceChannel.id,
+      voiceChannelId: voiceChannelId,
     },
     update: {
       useZundamon: false,
     },
     create: {
-      voiceChannelId: voiceChannel.id,
+      voiceChannelId: voiceChannelId,
       useZundamon: false,
     }
   });
 
-  if (hasConnection(voiceChannel)) leaveVC(voiceChannel);
+  if (hasConnection(voiceChannelId, guildId)) await leaveVC(voiceChannelId, guildId);
 }
 
 export async function readText(
-  voiceChannel: VoiceChannel,
+  voiceChannelId: Snowflake,
+  guildId: Snowflake,
   text: string,
   speakerId?: number,
   speedScale?: number,
@@ -70,7 +101,7 @@ export async function readText(
   intonationScale?: number,
 ) {
 
-  if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
+  if (!hasConnection(voiceChannelId, guildId)) await joinVC(voiceChannelId, guildId);
 
   const query = await httpAsync.request(
     `${ENDPOINT}/audio_query?speaker=${speakerId??3}&text=${encodeURIComponent(text)}`,
@@ -92,14 +123,14 @@ export async function readText(
         'Content-Length': Buffer.byteLength(query),
       },
     }, query);
-  const player = players.get(voiceChannel.id);
+  const player = players.get(voiceChannelId);
   if (!player) return;
 
   player.play(createAudioResource(Readable.from(buffer)));
 }
 
-export function hasConnection(voiceChannel: VoiceChannel) {
-  const connection = getVoiceConnection(voiceChannel.guildId, voiceChannel.id);
+export function hasConnection(voiceChannelId: Snowflake, guildId: Snowflake) {
+  const connection = getVoiceConnection(guildId, voiceChannelId);
   return !!connection;
 }
 
@@ -112,13 +143,41 @@ export async function isOnZundamon(voiceChannel: VoiceChannel) {
   return room && room.useZundamon;
 }
 
-export function leaveVC(voiceChannel: VoiceChannel) {
-  const connection = getVoiceConnection(voiceChannel.guildId, voiceChannel.id);
+export async function leaveVC(voiceChannelId: Snowflake, guildId: Snowflake) {
+  const connection = getVoiceConnection(guildId, voiceChannelId);
   if (connection) connection.destroy();
 
-  const player = players.get(voiceChannel.id);
+  const player = players.get(voiceChannelId);
   if (player) {
-    players.delete(voiceChannel.id);
+    players.delete(voiceChannelId);
     player.stop();
   }
+}
+
+export async function handleLeaveVC(client: Client, guildId: Snowflake) {
+  const usedClients = CLIENT_CONNECTIONS.get(guildId);
+  if (usedClients && client.user) {
+    usedClients.delete(client.user.id);
+  }
+  const next = getWaitingQueue(guildId);
+  if (next) {
+    await joinVC(next, guildId);
+  }
+}
+
+function addWaitingQueue(voiceChannelId: Snowflake, guildId: Snowflake) {
+  let queue = WAITING_QUEUE.get(guildId);
+  if (!queue) {
+    queue = new Array<Snowflake>(voiceChannelId);
+    WAITING_QUEUE.set(guildId, queue);
+  } else {
+    if (queue.every(v => v !== voiceChannelId)) {
+      queue.push(voiceChannelId);
+    }
+  }
+}
+
+function getWaitingQueue(guildId: Snowflake) {
+  const queue = WAITING_QUEUE.get(guildId);
+  return queue?.shift();
 }

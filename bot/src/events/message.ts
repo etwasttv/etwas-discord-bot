@@ -27,7 +27,8 @@ export const listener = new DiscordEventListener(
     if (member.room?.textChannelId !== message.channelId) return;
     if (await isOnZundamon(voiceChannel)) {
       await readText(
-        voiceChannel,
+        voiceChannel.id,
+        voiceChannel.guildId,
         message.content,
         member.speakerId,
         member.speedScale,

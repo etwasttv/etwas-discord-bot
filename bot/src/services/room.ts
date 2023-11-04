@@ -89,10 +89,16 @@ export async function joinMember(
           content: `このチャンネルは${voiceChannel.url}に入っている人だけに表示されます`,
         });
         if (member.room.useZundamon) {
-          joinVC(voiceChannel);
-          await textChannel.send({
-            content: `このチャンネルの内容は${voiceChannel.url}で読み上げられます`,
-          });
+          try {
+            await joinVC(voiceChannel.id, voiceChannel.guildId);
+            await textChannel.send({
+              content: `このチャンネルの内容は${voiceChannel.url}で読み上げられます`,
+            });
+          } catch (err) {
+            await textChannel.send({
+              content: `他のチャンネルでBotが使われているようです`,
+            });
+          }
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(VcTurnOffButton);
           await textChannel.send({
             content: `🗣️読み上げ設定`,
@@ -168,7 +174,7 @@ export async function leaveMember(
         = await Promise.all([textChannelTask, roleTask]);
 
       if (deleteRoom) {
-        leaveVC(voiceChannel);
+        await leaveVC(voiceChannel.id, voiceChannel.guildId);
         if (textChannel) tasks.push(textChannel.delete());
         if (role) tasks.push(role.delete());
         tasks.push(tx.room.update({
