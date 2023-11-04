@@ -11,11 +11,14 @@ datasource db {
 }
 
 model Member {
-  id        String  @id
-  useZunda  Boolean @default(false)
-  roomId    String?
-  room      Room?   @relation(fields: [roomId], references: [voiceChannelId])
-  responses CustomResponse[]
+  id              String           @id
+  speakerId       Int              @default(3)
+  speedScale      Float            @default(1.0)
+  pitchScale      Float            @default(0.0)
+  intonationScale Float            @default(1.0)
+  roomId          String?
+  room            Room?            @relation(fields: [roomId], references: [voiceChannelId])
+  responses       CustomResponse[]
 }
 
 model Room {
