@@ -1,4 +1,4 @@
-import { GuildMember, Snowflake, VoiceChannel } from "discord.js";
+import { Snowflake, VoiceChannel } from "discord.js";
 import {
   AudioPlayer,
   joinVoiceChannel,
@@ -15,7 +15,7 @@ const ENDPOINT = 'http://voicevox:50021';
 
 const players = new Map<Snowflake, AudioPlayer>();
 
-export async function joinVC(voiceChannel: VoiceChannel) {
+export function joinVC(voiceChannel: VoiceChannel) {
   const connection = joinVoiceChannel({
     channelId: voiceChannel.id,
     guildId: voiceChannel.guildId,
@@ -23,6 +23,12 @@ export async function joinVC(voiceChannel: VoiceChannel) {
     adapterCreator: voiceChannel.guild.voiceAdapterCreator,
   });
 
+  const player = createAudioPlayer();
+  connection.subscribe(player);
+  players.set(voiceChannel.id, player);
+}
+
+export async function turnOnVc(voiceChannel: VoiceChannel) {
   await prisma.room.upsert({
     where: {
       voiceChannelId: voiceChannel.id,
@@ -35,52 +41,30 @@ export async function joinVC(voiceChannel: VoiceChannel) {
       useZundamon: true,
     }
   });
-
-  const player = createAudioPlayer();
-  connection.subscribe(player);
-  players.set(voiceChannel.id, player);
+  if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
 }
 
-export async function checkSelfYomiage(guildMember: GuildMember) {
-  const member = await prisma.member.findUnique({
+export async function turnOffVc(voiceChannel: VoiceChannel) {
+  await prisma.room.upsert({
     where: {
-      id: guildMember.id,
-    }
-  });
-  return member && member.useZunda;
-}
-
-export async function turnOnSelfYomiage(guildMember: GuildMember) {
-  await prisma.member.upsert({
-    where: {
-      id: guildMember.id,
+      voiceChannelId: voiceChannel.id,
     },
     update: {
-      useZunda: true,
+      useZundamon: false,
     },
     create: {
-      id: guildMember.id,
-      useZunda: true,
+      voiceChannelId: voiceChannel.id,
+      useZundamon: false,
     }
   });
-}
 
-export async function turnOffSelfYomiage(guildMember: GuildMember) {
-  await prisma.member.upsert({
-    where: {
-      id: guildMember.id,
-    },
-    update: {
-      useZunda: false,
-    },
-    create: {
-      id: guildMember.id,
-      useZunda: false,
-    },
-  });
+  if (hasConnection(voiceChannel)) leaveVC(voiceChannel);
 }
 
 export async function readText(voiceChannel: VoiceChannel, text: string) {
+
+  if (!hasConnection(voiceChannel)) joinVC(voiceChannel);
+
   const query = await httpAsync.request(
     `${ENDPOINT}/audio_query?speaker=1&text=${encodeURIComponent(text)}`,
     {
@@ -116,22 +100,9 @@ export async function isOnZundamon(voiceChannel: VoiceChannel) {
   return room && room.useZundamon;
 }
 
-export async function leaveVC(voiceChannel: VoiceChannel) {
+export function leaveVC(voiceChannel: VoiceChannel) {
   const connection = getVoiceConnection(voiceChannel.guildId, voiceChannel.id);
   if (connection) connection.destroy();
-
-  await prisma.room.upsert({
-    where: {
-      voiceChannelId: voiceChannel.id,
-    },
-    update: {
-      useZundamon: false,
-    },
-    create: {
-      voiceChannelId: voiceChannel.id,
-      useZundamon: false,
-    }
-  });
 
   const player = players.get(voiceChannel.id);
   if (player) {

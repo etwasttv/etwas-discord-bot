@@ -1,6 +1,9 @@
 import {
   Awaitable,
+  ButtonBuilder,
+  ButtonInteraction,
   CommandInteraction,
+  Interaction,
   SlashCommandBuilder,
   SlashCommandSubcommandsOnlyBuilder
 } from "discord.js";
@@ -32,6 +35,18 @@ export class AppCommandHandler {
     handler: (interaction: CommandInteraction) => Promise<void>
   ) {
     this.data = data;
+    this.handler = handler;
+  }
+}
+
+export class ButtonHandler {
+  id: string;
+  handler: (interaction: ButtonInteraction) => Promise<void>;
+  constructor(
+    id: string,
+    handler: (Interaction: ButtonInteraction) => Promise<void>,
+  ) {
+    this.id = id;
     this.handler = handler;
   }
 }

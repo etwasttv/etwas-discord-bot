@@ -1,5 +1,6 @@
 import { readdir } from 'fs/promises';
 import {
+  ButtonInteraction,
   Client,
   Collection,
   CommandInteraction,
@@ -7,7 +8,7 @@ import {
   GatewayIntentBits
 } from 'discord.js';
 
-import { DiscordEventListener, AppCommandHandler } from './lib';
+import { DiscordEventListener, AppCommandHandler, ButtonHandler } from './lib';
 
 import { bot_token as TOKEN } from './config.json';
 
@@ -60,7 +61,32 @@ async function addCommandHandler(): Promise<number> {
     handlers.set(handler.data.name, handler);
   }));
 
+  const bHandlers = new Collection<string, ButtonHandler>();
+  const bFiles = await readdir('./components');
+
+  await Promise.all(bFiles.map(async file => {
+    const { handler } = await import(`./components/${file}`);
+    if (!(handler instanceof ButtonHandler)) return;
+
+    bHandlers.set(handler.id, handler);
+  }))
+
   CLIENT.on(Events.InteractionCreate, async interaction => {
+    if (interaction.isButton()) {
+      const handler = bHandlers.get(interaction.customId);
+      if (!handler) return;
+      try {
+        await handler.handler(<ButtonInteraction>interaction);
+      } catch (err) {
+        console.error(err);
+        await interaction.reply({
+          content: 'There was an error while executing this button!',
+          ephemeral: true,
+        });
+      }
+      return;
+    }
+
     if (!interaction.isCommand()) return;
 
     if (interaction.user.bot) return;

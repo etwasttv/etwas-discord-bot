@@ -1,5 +1,8 @@
 import AsyncLock from 'async-lock';
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   ChannelType,
   Client,
   GuildBasedChannel,
@@ -13,7 +16,9 @@ import {
 } from 'discord.js';
 import { prisma } from '../lib/prisma';
 import { Room } from '@prisma/client';
-import { leaveVC } from './reading';
+import { joinVC, leaveVC } from './reading';
+import { VcTurnOnButton } from '../components/vcTurnOnButton';
+import { VcTurnOffButton } from '../components/vcTurnOffButton';
 
 const LOCK = new AsyncLock();
 
@@ -80,6 +85,25 @@ export async function joinMember(
 
       await guildMember.roles.add(role);
 
+      if (member.room.textChannelId !== textChannel.id) {
+        await textChannel.send(`このチャンネルは${voiceChannel.url}に入っている人だけに表示されます\n`);
+        if (member.room.useZundamon) {
+          joinVC(voiceChannel);
+          await textChannel.send(`このチャンネルの内容は${voiceChannel.url}で読み上げられます`);
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(VcTurnOffButton);
+          await textChannel.send({
+            content: `🗣️読み上げ設定`,
+            components: [row]
+          });
+        } else {
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(VcTurnOnButton);
+          await textChannel.send({
+            content: `🗣️読み上げ設定`,
+            components: [row]
+          });
+        }
+      }
+
       await tx.room.update({
         where: {
           voiceChannelId: voiceChannel.id,
@@ -141,7 +165,7 @@ export async function leaveMember(
         = await Promise.all([textChannelTask, roleTask]);
 
       if (deleteRoom) {
-        await leaveVC(voiceChannel);
+        leaveVC(voiceChannel);
         if (textChannel) tasks.push(textChannel.delete());
         if (role) tasks.push(role.delete());
         tasks.push(tx.room.update({
@@ -237,9 +261,6 @@ async function createRoomTextChannel(voiceChannel: VoiceChannel) {
     permissionOverwrites: permissionOverwrites,
     parent: voiceChannel.parent,
   });
-
-  await channel.send(`このチャンネルは${voiceChannel.url}に入っている人だけに表示されます\n`);
-
   return channel;
 }
 
