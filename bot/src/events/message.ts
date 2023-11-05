@@ -26,15 +26,19 @@ export const listener = new DiscordEventListener(
 
     if (member.room?.textChannelId !== message.channelId) return;
     if (await isOnZundamon(voiceChannel)) {
-      await readText(
-        voiceChannel.id,
-        voiceChannel.guildId,
-        message.content,
-        member.speakerId,
-        member.speedScale,
-        member.pitchScale,
-        member.intonationScale,
-      );
+      try {
+        await readText(
+          voiceChannel.id,
+          voiceChannel.guildId,
+          message.content,
+          member.speakerId,
+          member.speedScale,
+          member.pitchScale,
+          member.intonationScale,
+        );
+      } catch (err) {
+        console.error(err);
+      }
     }
   },
 );

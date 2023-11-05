@@ -22,11 +22,10 @@ export const handler = new ComponentHandler(
       components: [new ActionRowBuilder<ButtonBuilder>().addComponents([VcTurnOffButton])],
     });
 
-    const voiceChannel = <VoiceChannel>(await interaction.guild.channels.fetch(room.voiceChannelId));
     try {
-      await turnOnVc(voiceChannel.id, voiceChannel.guildId);
+      await turnOnVc(room.voiceChannelId, interaction.guild.id);
     } catch (err) {
-      interaction.reply('他のチャンネルでBotが使われているようです');
+      await interaction.channel?.send('botは今忙しいようです');
     }
   }
 );
