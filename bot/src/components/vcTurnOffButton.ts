@@ -22,7 +22,6 @@ export const handler = new ComponentHandler(
       components: [new ActionRowBuilder<ButtonBuilder>().addComponents(VcTurnOnButton)],
     });
 
-    const voiceChannel = <VoiceChannel>(await interaction.guild.channels.fetch(room.voiceChannelId));
-    await turnOffVc(voiceChannel.id, voiceChannel.guildId);
+    await turnOffVc(room.voiceChannelId, interaction.guild.id);
   }
 );

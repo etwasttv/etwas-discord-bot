@@ -127,7 +127,10 @@ async function main() {
   CLIENT.login(BOTINFO[0].bot_token);
 
   for (let i=1; i<BOTINFO.length; i++) {
-    const c = new Client({intents: []});
+    const c = new Client({intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildVoiceStates,
+    ]});
     c.login(BOTINFO[i].bot_token);
     CLIENTS.push(c);
   }
