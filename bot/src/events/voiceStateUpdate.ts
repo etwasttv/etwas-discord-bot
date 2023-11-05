@@ -12,19 +12,28 @@ export const listener = new DiscordEventListener(
 
 
     if (before.member?.user.bot || after.member?.user.bot) {
-      if (!after.channel && CLIENTS.map(c => c.user?.id).find(id => id === before.member?.user.id)) {
-        await handleLeaveVC(before.client, before.guild.id);
+      const client = CLIENTS.find(c => c.user?.id === before.member?.user.id);
+      if (!after.channel && client) {
+        await handleLeaveVC(client, before.guild.id);
       }
       return;
     };
 
 
     if (before.channel instanceof VoiceChannel && before.member) {
-      await leaveMember(before.channel, before.member);
+      try {
+        await leaveMember(before.channel, before.member);
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     if (after.channel instanceof VoiceChannel && after.member) {
-      await joinMember(after.channel, after.member);
+      try {
+        await joinMember(after.channel, after.member);
+      } catch (err) {
+        console.error(err);
+      }
     }
   }
 );

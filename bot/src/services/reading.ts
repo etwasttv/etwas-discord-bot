@@ -5,6 +5,7 @@ import {
   createAudioPlayer,
   createAudioResource,
   getVoiceConnection,
+  AudioPlayerStatus,
 } from '@discordjs/voice';
 
 import httpAsync from '../lib/http-async';
@@ -25,6 +26,7 @@ function getFreeClient(guildId: Snowflake) {
     const client = CLIENTS.find(c => c.user?.id);
     if (!client || !client.user) return null;
     CLIENT_CONNECTIONS.set(guildId, new Set([client.user.id]));
+    console.log(`[LOG] ${client.user.id}@${guildId} in use`);
     return client;
   }
 
@@ -32,6 +34,7 @@ function getFreeClient(guildId: Snowflake) {
     if (!client.user) continue;
     if (usedClients.has(client.user.id)) continue;
     usedClients.add(client.user.id);
+    console.log(`[LOG] ${client.user.id}@${guildId} in use`);
     return client;
   }
 }
@@ -40,6 +43,7 @@ function releaseClient(guildId: Snowflake, clientId: Snowflake) {
   const usedClients = CLIENT_CONNECTIONS.get(guildId);
   if (!usedClients) return;
   usedClients.delete(clientId);
+  console.log(`[LOG] ${clientId}@${guildId} release`);
 }
 
 export async function joinVC(voiceChannelId: string, guildId: string) {
@@ -50,8 +54,9 @@ export async function joinVC(voiceChannelId: string, guildId: string) {
     throw new Error('bot busy');
   }
 
+  const guild0 = await CLIENTS[0].guilds.fetch(guildId);
   const guild = await client.guilds.fetch(guildId);
-  const voiceChannel = <VoiceChannel>(await guild.channels.fetch(voiceChannelId));
+  const voiceChannel = <VoiceChannel>(await guild0.channels.fetch(voiceChannelId));
   if (voiceChannel.members.every(m => m.user.bot)) {
     releaseClient(guildId, client.user.id);
     return;
@@ -138,9 +143,20 @@ export async function readText(
         'Content-Length': Buffer.byteLength(query),
       },
     }, query);
-  const player = players.get(voiceChannelId);
-  if (!player) return;
-
+  let player = players.get(voiceChannelId);
+  if (!player) {
+    const connection = getVoiceConnection(guildId, voiceChannelId);
+    player = createAudioPlayer();
+    if (!connection) {
+      console.log('[LOG] no connection');
+      return;
+    }
+    if (!connection.subscribe(player)) {
+      console.log('[LOG] unable subscribe');
+      return;
+    }
+    players.set(voiceChannelId, player);
+  }
   player.play(createAudioResource(Readable.from(buffer)));
 }
 
@@ -170,10 +186,8 @@ export async function leaveVC(voiceChannelId: Snowflake, guildId: Snowflake) {
 }
 
 export async function handleLeaveVC(client: Client, guildId: Snowflake) {
-  const usedClients = CLIENT_CONNECTIONS.get(guildId);
-  if (usedClients && client.user) {
-    usedClients.delete(client.user.id);
-  }
+  if (client.user)
+    releaseClient(guildId, client.user.id);
   const next = getWaitingQueue(guildId);
   if (next) {
     await joinVC(next, guildId);
@@ -185,10 +199,13 @@ function addWaitingQueue(voiceChannelId: Snowflake, guildId: Snowflake) {
   if (!queue) {
     queue = new Array<Snowflake>(voiceChannelId);
     WAITING_QUEUE.set(guildId, queue);
+    console.log(`[LOG] ${voiceChannelId}@${guildId} push queue`);
   } else {
-    if (queue.every(v => v !== voiceChannelId)) {
+    if (!queue.find(v => v === voiceChannelId)) {
       queue.push(voiceChannelId);
+      console.log(`[LOG] ${voiceChannelId}@${guildId} push queue`);
     }
+    console.log(`[LOG] ${voiceChannelId}@${guildId} exist in queue`);
   }
 }
 
