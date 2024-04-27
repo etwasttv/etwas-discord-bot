@@ -1,5 +1,7 @@
 import fs from "fs";
-import { BOT_TOKEN, BOT_CLIENT_ID } from "config.json";
+// import { BOT_TOKEN, BOT_CLIENT_ID } from "../../config.json";
+const BOT_TOKEN = "";
+const BOT_CLIENT_ID = "";
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,

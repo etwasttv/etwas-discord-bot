@@ -1,7 +1,7 @@
 import { ActionRowBuilder, SlashCommandBuilder, StringSelectMenuBuilder } from 'discord.js';
-import { prisma } from '../lib/prisma';
-import { getSpeakerSelect } from '../components/speakerSelect';
-import { BotCommand } from '@/types/command';
+import { prisma } from 'lib/prisma';
+import { getSpeakerSelect } from 'components/speakerSelect';
+import { BotCommand } from 'types/command';
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()

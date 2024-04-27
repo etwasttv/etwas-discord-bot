@@ -1,9 +1,9 @@
 import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder } from 'discord.js';
 
-import { prisma } from '../lib/prisma';
-import { VcTurnOffButton } from '../components/vcTurnOffButton';
-import { VcTurnOnButton } from '../components/vcTurnOnButton';
-import { BotCommand } from '@/types/command';
+import { prisma } from 'lib/prisma';
+import { VcTurnOffButton } from 'components/vcTurnOffButton';
+import { VcTurnOnButton } from 'components/vcTurnOnButton';
+import { BotCommand } from 'types/command';
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()

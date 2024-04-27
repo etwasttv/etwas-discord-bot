@@ -1,6 +1,6 @@
 import { Events, VoiceChannel, VoiceState } from "discord.js";
-import { joinMember, leaveMember } from "@/services/room";
-import { BotEvent } from '@/types/event';
+import { joinMember, leaveMember } from "services/room";
+import { BotEvent } from 'types/event';
 // import { CLIENTS } from "..";
 // import { handleLeaveVC } from "../services/reading";
 

@@ -1,7 +1,7 @@
 import { Events, Message } from "discord.js";
 import { getVoiceChannel } from "../lib/utils";
-import { prisma } from '../lib/prisma';
-import { BotEvent } from '@/types/event';
+import { prisma } from 'lib/prisma';
+import { BotEvent } from 'types/event';
 // import { isOnZundamon, readText } from "../services/reading";
 
 const event: BotEvent = {

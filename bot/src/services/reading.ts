@@ -11,7 +11,7 @@ import {
 
 import httpAsync from '../lib/http-async';
 import { prisma } from "../lib/prisma";
-import { discordClient as CLIENT } from '@/core/discord-client';
+import { discordClient as CLIENT } from 'core/discord-client';
 
 /*
 const CLIENT_CONNECTIONS = new Map<Snowflake, Set<Snowflake>>();

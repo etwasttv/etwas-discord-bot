@@ -8,9 +8,10 @@ import {
 } from 'discord.js';
 
 import { discordClient as CLIENT } from './core/discord-client';
-import { BOT_TOKEN } from 'config.json';
+// import { BOT_TOKEN } from '../config.json';
 import { BotCommand } from './types/command';
 import { BotEvent } from './types/event';
+const BOT_TOKEN = "";
 
 async function addEventListener(): Promise<number> {
   const files = (await readdir(path.resolve(__dirname, './events'), { recursive: true }))
