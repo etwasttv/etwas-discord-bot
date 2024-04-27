@@ -7,28 +7,30 @@ import {
   Events,
 } from 'discord.js';
 
-import { DiscordEventListener, AppCommandHandler, ComponentHandler } from '@/lib';
 import { discordClient as CLIENT } from './core/discord-client';
 import { BOT_TOKEN } from 'config.json';
+import { BotCommand } from './types/command';
+import { BotEvent } from './types/event';
 
 async function addEventListener(): Promise<number> {
-  const files = await readdir(path.resolve(__dirname, './events'));
+  const files = (await readdir(path.resolve(__dirname, './events'), { recursive: true }))
+    .filter(f => path.extname(f) === '.ts' || path.extname(f) === '.js');
 
   await Promise.all(files.map(async file => {
-    const { listener } = await import(`./events/${file}`);
-    if (!(listener instanceof DiscordEventListener)) return;
+    const event: BotEvent = (await import(`./events/${file}`)).default;
+    if (!event) return;
 
-    if (listener.once) {
-      //  一度だけ実行するイベント
+    if (event.once) {
+      //  execute only once
       CLIENT.once(
-        (listener.eventName as string),
-        (...args) => listener.execute(...args)
+        event.eventName as string,
+        (...args) => event.listener(...args)
       );
     } else {
-      //  毎回実行するイベント
+      //  execute everytime
       CLIENT.on(
-        (listener.eventName as string),
-        (...args) => listener.execute(...args)
+        event.eventName as string,
+        (...args) => event.listener(...args)
       );
     }
   }));
@@ -36,56 +38,32 @@ async function addEventListener(): Promise<number> {
   return files.length;
 }
 
-async function addCommandHandler(): Promise<number> {
-  const handlers = new Collection<string, AppCommandHandler>();
+async function registerCommand(): Promise<number> {
+  const commands = new Collection<string, BotCommand>();
   const files = await readdir(path.resolve(__dirname, './commands'));
-
   await Promise.all(files.map(async file => {
-    const { handler } = await import(`./commands/${file}`);
+    try {
+      const command: BotCommand = (await import(`./commands/${file}`)).default;
 
-    if (!(handler instanceof AppCommandHandler)) return;
+      if (!command) return;
 
-    handlers.set(handler.data.name, handler);
+      commands.set(command.builder.name, command);
+    } catch (e) {
+      console.error(e);
+    }
   }));
 
-  const bHandlers = new Collection<string, ComponentHandler>();
-  const bFiles = await readdir(path.resolve(__dirname, './components'));
-
-  await Promise.all(bFiles.map(async file => {
-    const { handler } = await import(`./components/${file}`);
-    if (!(handler instanceof ComponentHandler)) return;
-
-    bHandlers.set(handler.id, handler);
-  }))
-
+  //  register
   CLIENT.on(Events.InteractionCreate, async interaction => {
-    if (interaction.isButton() || interaction.isStringSelectMenu()) {
-      const handler = bHandlers.get(interaction.customId);
-      if (!handler) {
-        return;
-      }
-      try {
-        await handler.handler(interaction);
-      } catch (err) {
-        console.error(err);
-        await interaction.reply({
-          content: 'There was an error while executing this button!',
-          ephemeral: true,
-        });
-      }
-      return;
-    }
-
+    if (interaction.user.bot) return;
     if (!interaction.isCommand()) return;
 
-    if (interaction.user.bot) return;
-
-    const handler = handlers.get(interaction.commandName);
-
-    if (!handler) return;
+    const command = commands.get(interaction.commandName);
+    if (!command) return;
 
     try {
-      await handler.handler(<CommandInteraction>interaction);
+      //  execute
+      await command.handler(<CommandInteraction>interaction);
     } catch (err) {
       console.error(err);
       await interaction.reply({
@@ -95,7 +73,7 @@ async function addCommandHandler(): Promise<number> {
     }
   });
 
-  return handlers.size;
+  return commands.size;
 }
 
 async function main() {
@@ -106,7 +84,7 @@ async function main() {
 
   //  イベントを読み込む
   const [eventNum, commandNum]
-    = await Promise.all([addEventListener(), addCommandHandler()]);
+    = await Promise.all([addEventListener(), registerCommand()]);
   console.log(`${eventNum} 個のイベント，${commandNum} 個のコマンドを登録しました`);
 
   //  ログイン

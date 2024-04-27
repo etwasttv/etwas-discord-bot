@@ -1,18 +1,19 @@
 import { Events, Message } from "discord.js";
-import { DiscordEventListener } from "../lib"; 
 import { getVoiceChannel } from "../lib/utils";
 import { prisma } from '../lib/prisma';
+import { BotEvent } from '@/types/event';
 // import { isOnZundamon, readText } from "../services/reading";
 
-export const listener = new DiscordEventListener(
-  Events.MessageCreate,
-  false,
-  async (message: Message) => {
+const event: BotEvent = {
+  eventName: Events.MessageCreate,
+  once: false,
+  listener: async (message: Message) => {
     if (!message.guild) return;
 
     const voiceChannel = await getVoiceChannel(message.guild, message.author.id);
     if (!voiceChannel) return;
 
+    //  Todo: ddd
     const member = await prisma.member.findUnique({
       where: {
         id: message.author.id,
@@ -41,4 +42,6 @@ export const listener = new DiscordEventListener(
     //   }
     // }
   },
-);
+};
+
+export default event;

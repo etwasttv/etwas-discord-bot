@@ -1,13 +1,13 @@
 import { Events, VoiceChannel, VoiceState } from "discord.js";
-import { DiscordEventListener } from "../lib";
-import { joinMember, leaveMember } from "../services/room";
+import { joinMember, leaveMember } from "@/services/room";
+import { BotEvent } from '@/types/event';
 // import { CLIENTS } from "..";
 // import { handleLeaveVC } from "../services/reading";
 
-export const listener = new DiscordEventListener(
-  Events.VoiceStateUpdate,
-  false,
-  async (before: VoiceState, after: VoiceState) => {
+const event: BotEvent = {
+  eventName: Events.VoiceStateUpdate,
+  once: false,
+  listener: async (before: VoiceState, after: VoiceState) => {
     if (before.channelId === after.channelId) return;
 
 
@@ -36,4 +36,4 @@ export const listener = new DiscordEventListener(
       }
     }
   }
-);
+};
