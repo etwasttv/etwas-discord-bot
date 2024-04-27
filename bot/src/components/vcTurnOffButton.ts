@@ -2,7 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, VoiceChannel } from "disc
 import { ComponentHandler } from "../lib";
 import { VcTurnOnButton } from "./vcTurnOnButton";
 import { prisma } from "../lib/prisma";
-import { turnOffVc } from "../services/reading";
+// import { turnOffVc } from "../services/reading";
 
 export const VcTurnOffButton = new ButtonBuilder()
     .setCustomId('vc-turn-off')
@@ -22,6 +22,6 @@ export const handler = new ComponentHandler(
       components: [new ActionRowBuilder<ButtonBuilder>().addComponents(VcTurnOnButton)],
     });
 
-    await turnOffVc(room.voiceChannelId, interaction.guild.id);
+    // await turnOffVc(room.voiceChannelId, interaction.guild.id);
   }
 );

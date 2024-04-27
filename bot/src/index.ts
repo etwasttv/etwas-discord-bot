@@ -1,29 +1,15 @@
 import { readdir } from 'fs/promises';
+import path from 'path';
+
 import {
-  Client,
   Collection,
   CommandInteraction,
   Events,
-  GatewayIntentBits
 } from 'discord.js';
 
 import { DiscordEventListener, AppCommandHandler, ComponentHandler } from '@/lib';
-
-import { bot_info as BOTINFO } from 'config.json';
-import path from 'path';
-
-const CLIENT = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.MessageContent,
-  ]
-});
-
-export const CLIENTS = [CLIENT];
+import { discordClient as CLIENT } from './core/discord-client';
+import { BOT_TOKEN } from 'config.json';
 
 async function addEventListener(): Promise<number> {
   const files = await readdir(path.resolve(__dirname, './events'));
@@ -113,7 +99,7 @@ async function addCommandHandler(): Promise<number> {
 }
 
 async function main() {
-  if (!BOTINFO[0].bot_token) {
+  if (BOT_TOKEN) {
     console.log('TOKEN を指定して下さい');
     return;
   }
@@ -125,16 +111,7 @@ async function main() {
 
   //  ログイン
   console.log('Discord Botを起動します');
-  CLIENT.login(BOTINFO[0].bot_token);
-
-  for (let i=1; i<BOTINFO.length; i++) {
-    const c = new Client({intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildVoiceStates,
-    ]});
-    c.login(BOTINFO[i].bot_token);
-    CLIENTS.push(c);
-  }
+  CLIENT.login(BOT_TOKEN);
 }
 
 main();

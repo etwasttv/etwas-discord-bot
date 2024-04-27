@@ -15,7 +15,7 @@ import {
 } from 'discord.js';
 import { prisma } from '../lib/prisma';
 import { Room } from '@prisma/client';
-import { joinVC, leaveVC } from './reading';
+// import { joinVC, leaveVC } from './reading';
 import { VcTurnOnButton } from '../components/vcTurnOnButton';
 import { VcTurnOffButton } from '../components/vcTurnOffButton';
 
@@ -90,7 +90,7 @@ export async function joinMember(
         });
         if (member.room.useZundamon) {
           try {
-            await joinVC(voiceChannel.id, voiceChannel.guildId);
+            // await joinVC(voiceChannel.id, voiceChannel.guildId);
             await textChannel.send({
               content: `このチャンネルの内容は${voiceChannel.url}で読み上げられます`,
             });
@@ -174,7 +174,7 @@ export async function leaveMember(
         = await Promise.all([textChannelTask, roleTask]);
 
       if (deleteRoom) {
-        await leaveVC(voiceChannel.id, voiceChannel.guildId);
+        // await leaveVC(voiceChannel.id, voiceChannel.guildId);
         if (textChannel) tasks.push(textChannel.delete());
         if (role) tasks.push(role.delete());
         tasks.push(tx.room.update({

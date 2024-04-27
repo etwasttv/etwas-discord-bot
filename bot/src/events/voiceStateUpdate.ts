@@ -1,8 +1,8 @@
 import { Events, VoiceChannel, VoiceState } from "discord.js";
 import { DiscordEventListener } from "../lib";
 import { joinMember, leaveMember } from "../services/room";
-import { CLIENTS } from "..";
-import { handleLeaveVC } from "../services/reading";
+// import { CLIENTS } from "..";
+// import { handleLeaveVC } from "../services/reading";
 
 export const listener = new DiscordEventListener(
   Events.VoiceStateUpdate,
@@ -12,10 +12,10 @@ export const listener = new DiscordEventListener(
 
 
     if (before.member?.user.bot || after.member?.user.bot) {
-      const client = CLIENTS.find(c => c.user?.id === before.member?.user.id);
-      if (!after.channel && client) {
-        await handleLeaveVC(client, before.guild.id);
-      }
+      // const client = CLIENTS.find(c => c.user?.id === before.member?.user.id);
+      // if (!after.channel && client) {
+        // await handleLeaveVC(client, before.guild.id);
+      // }
       return;
     };
 
