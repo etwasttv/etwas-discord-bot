@@ -1,0 +1,21 @@
+version: '4'
+
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=etwas
+      - POSTGRES_DB=etwas
+    ports:
+      - "5432:5432"
+  
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    ports:
+      - "50021:50021"
+
+volumes:
+  postgres-data:

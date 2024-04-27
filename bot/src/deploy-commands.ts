@@ -1,17 +1,20 @@
 import fs from "fs";
-import { bot_info as BOTINFO } from "./config.json";
+import { bot_info as BOTINFO } from "config.json";
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes
 } from "discord.js";
 import { AppCommandHandler } from "./lib";
+import path from 'path';
+
+console.log(__dirname);
 
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
   const rest = new REST({ version: "10" }).setToken(BOTINFO[0].bot_token);
-  const commandFiles = fs.readdirSync("./commands");
+  const commandFiles = fs.readdirSync(path.resolve(__dirname, "./commands"));
 
   await Promise.all(commandFiles.map((file) => 
       import(`./commands/${file}`)

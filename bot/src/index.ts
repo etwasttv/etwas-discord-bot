@@ -7,9 +7,10 @@ import {
   GatewayIntentBits
 } from 'discord.js';
 
-import { DiscordEventListener, AppCommandHandler, ComponentHandler } from './lib';
+import { DiscordEventListener, AppCommandHandler, ComponentHandler } from '@/lib';
 
-import { bot_info as BOTINFO } from './config.json';
+import { bot_info as BOTINFO } from 'config.json';
+import path from 'path';
 
 const CLIENT = new Client({
   intents: [
@@ -25,7 +26,7 @@ const CLIENT = new Client({
 export const CLIENTS = [CLIENT];
 
 async function addEventListener(): Promise<number> {
-  const files = await readdir('./events');
+  const files = await readdir(path.resolve(__dirname, './events'));
 
   await Promise.all(files.map(async file => {
     const { listener } = await import(`./events/${file}`);
@@ -51,7 +52,7 @@ async function addEventListener(): Promise<number> {
 
 async function addCommandHandler(): Promise<number> {
   const handlers = new Collection<string, AppCommandHandler>();
-  const files = await readdir('./commands');
+  const files = await readdir(path.resolve(__dirname, './commands'));
 
   await Promise.all(files.map(async file => {
     const { handler } = await import(`./commands/${file}`);
@@ -62,7 +63,7 @@ async function addCommandHandler(): Promise<number> {
   }));
 
   const bHandlers = new Collection<string, ComponentHandler>();
-  const bFiles = await readdir('./components');
+  const bFiles = await readdir(path.resolve(__dirname, './components'));
 
   await Promise.all(bFiles.map(async file => {
     const { handler } = await import(`./components/${file}`);

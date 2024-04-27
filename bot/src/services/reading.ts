@@ -16,7 +16,7 @@ import { CLIENTS } from "..";
 const CLIENT_CONNECTIONS = new Map<Snowflake, Set<Snowflake>>();
 const WAITING_QUEUE = new Map<Snowflake, Array<Snowflake>>();
 
-const ENDPOINT = 'http://voicevox:50021';
+const ENDPOINT = 'http://127.0.0.1:50021';
 
 const players = new Map<Snowflake, AudioPlayer>();
 
