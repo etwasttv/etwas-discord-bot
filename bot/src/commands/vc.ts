@@ -1,16 +1,19 @@
 import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder } from 'discord.js';
 
-import { AppCommandHandler } from '../lib';
-import { prisma } from '../lib/prisma';
-import { VcTurnOffButton } from '../components/vcTurnOffButton';
-import { VcTurnOnButton } from '../components/vcTurnOnButton';
+import { prisma } from 'lib/prisma';
+import { VcTurnOffButton } from 'components/vcTurnOffButton';
+import { VcTurnOnButton } from 'components/vcTurnOnButton';
+import { BotCommand } from 'types/command';
 
-export const handler = new AppCommandHandler(
-  new SlashCommandBuilder()
+const command: BotCommand = {
+  builder: new SlashCommandBuilder()
     .setName('vc')
     .setDescription('turn on/off voicevox'),
-  async (interaction) => {
+  handler: async (interaction) => {
+    //  Return when executor is bot
     if (interaction.user.bot) return;
+
+    //  Return invoked from non-server.
     if (!interaction.guild) {
       await interaction.reply({
         content: 'サーバーから実行してください',
@@ -33,11 +36,13 @@ export const handler = new AppCommandHandler(
       return;
     }
 
-    const button = room.useZundamon ? VcTurnOffButton : VcTurnOnButton;
+    // const button = room.useZundamon ? VcTurnOffButton : VcTurnOnButton;
 
     await interaction.reply({
       content: '🗣️読み上げ設定',
-      components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)]
+      // components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)]
     });
-  },
-);
+  }
+}
+
+export default command;

@@ -5,9 +5,9 @@
   "main": "",
   "scripts": {
     "debug": "cd ./src && ts-node ./index.ts",
-    "build": "node -e \"fs.rmdirSync('dist', {recursive: true})\" & npx tsc -p .",
+    "build": "node -e \"fs.rm('dist', {recursive: true}, err => {})\" && npx tsc",
     "start": "node ./dist/index.js",
-    "deploy-command": "npx ts-node  -r tsconfig-paths/register src/deploy-commands.ts"
+    "deploy-command": "npx ts-node src/deploy-commands.ts"
   },
   "author": "",
   "license": "ISC",

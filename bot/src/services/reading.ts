@@ -1,3 +1,5 @@
+import { Readable } from "stream";
+
 import { Client, Snowflake, VoiceChannel } from "discord.js";
 import {
   AudioPlayer,
@@ -5,14 +7,13 @@ import {
   createAudioPlayer,
   createAudioResource,
   getVoiceConnection,
-  AudioPlayerStatus,
 } from '@discordjs/voice';
 
 import httpAsync from '../lib/http-async';
-import { Readable } from "stream";
 import { prisma } from "../lib/prisma";
-import { CLIENTS } from "..";
+import { discordClient as CLIENT } from 'core/discord-client';
 
+/*
 const CLIENT_CONNECTIONS = new Map<Snowflake, Set<Snowflake>>();
 const WAITING_QUEUE = new Map<Snowflake, Array<Snowflake>>();
 
@@ -54,7 +55,7 @@ export async function joinVC(voiceChannelId: string, guildId: string) {
     throw new Error('bot busy');
   }
 
-  const guild0 = await CLIENTS[0].guilds.fetch(guildId);
+  const guild0 = await CLIENT.guilds.fetch(guildId);
   const guild = await client.guilds.fetch(guildId);
   const voiceChannel = <VoiceChannel>(await guild0.channels.fetch(voiceChannelId));
   if (voiceChannel.members.every(m => m.user.bot)) {
@@ -213,3 +214,4 @@ function getWaitingQueue(guildId: Snowflake) {
   const queue = WAITING_QUEUE.get(guildId);
   return queue?.shift();
 }
+*/

@@ -1,12 +1,14 @@
 import { Client, Events } from "discord.js";
-import { DiscordEventListener } from "../lib";
-import { checkAll } from "../services/room";
+import { checkAll } from "services/room";
+import { BotEvent } from 'types/event';
 
-export const listener = new DiscordEventListener(
-  Events.ClientReady,
-  true,
-  async (client: Client) => {
+const event: BotEvent = {
+  eventName: Events.ClientReady,
+  once: true,
+  listener: async (client: Client) => {
     console.log(`Logged in as ${client.user?.tag}.`);
     await checkAll(client);
   },
-);
+};
+
+export default event;

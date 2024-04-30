@@ -1,19 +1,19 @@
 import fs from "fs";
-import { bot_info as BOTINFO } from "config.json";
+// import { BOT_TOKEN, BOT_CLIENT_ID } from "../../config.json";
+const BOT_TOKEN = "";
+const BOT_CLIENT_ID = "";
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes
 } from "discord.js";
-import { AppCommandHandler } from "./lib";
+import { AppCommandHandler } from "../lib";
 import path from 'path';
-
-console.log(__dirname);
 
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
-  const rest = new REST({ version: "10" }).setToken(BOTINFO[0].bot_token);
+  const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
   const commandFiles = fs.readdirSync(path.resolve(__dirname, "./commands"));
 
   await Promise.all(commandFiles.map((file) => 
@@ -24,7 +24,7 @@ console.log(__dirname);
 
   console.log(commands);
 
-  await rest.put(Routes.applicationCommands(BOTINFO[0].client_id), { body: commands })
+  await rest.put(Routes.applicationCommands(BOT_CLIENT_ID), { body: commands })
     .then(() => console.log(`Registered ${commands.length} application commands.`))
     .catch(console.error);
 })();

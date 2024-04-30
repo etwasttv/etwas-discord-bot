@@ -1,13 +1,13 @@
 import { ActionRowBuilder, SlashCommandBuilder, StringSelectMenuBuilder } from 'discord.js';
-import { AppCommandHandler } from '../lib';
-import { prisma } from '../lib/prisma';
-import { getSpeakerSelect } from '../components/speakerSelect';
+import { prisma } from 'lib/prisma';
+import { getSpeakerSelect } from 'components/speakerSelect';
+import { BotCommand } from 'types/command';
 
-export const handler = new AppCommandHandler(
-  new SlashCommandBuilder()
+const command: BotCommand = {
+  builder: new SlashCommandBuilder()
       .setName('voice')
       .setDescription('読み上げ音声の設定ができます'),
-  async (interaction) => {
+  handler: async (interaction) => {
     if (interaction.user.bot) return;
 
     const member = await prisma.member.upsert({
@@ -28,4 +28,6 @@ export const handler = new AppCommandHandler(
       ephemeral: true,
     });
   }
-)
+}
+
+export default command;
