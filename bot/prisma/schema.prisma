@@ -11,31 +11,28 @@ datasource db {
 }
 
 model Member {
-  id              String           @id
-  speakerId       Int              @default(3)
-  speedScale      Float            @default(1.0)
-  pitchScale      Float            @default(0.0)
-  intonationScale Float            @default(1.0)
-  roomId          String?
-  room            Room?            @relation(fields: [roomId], references: [voiceChannelId])
-  responses       CustomResponse[]
+  id String @id
 }
 
 model Room {
-  voiceChannelId String  @id
-  useZundamon    Boolean @default(false)
-  roleId         String? @unique
-  textChannelId  String? @unique
-  members        Member[]
+  voiceChannelId String @unique
+  voiceChannel   VoiceChannel @relation(fields: [voiceChannelId], references: [voiceChannelId], onDelete: Cascade)
+  textChannelId  String @unique
+  textChannel    TextChannel @relation(fields: [textChannelId], references: [textChannelId], onDelete: Cascade)
+
+  @@id([voiceChannelId, textChannelId])
 }
 
-model CustomResponse {
-  id       Int    @id @default(autoincrement())
-  key      String
-  response String
-  guildId  String
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id])
+model VoiceChannel {
+  voiceChannelId   String @id
+  voiceChannelName String
+  guildId          String
+  room             Room?
+}
 
-  @@unique([key, guildId])
+model TextChannel {
+  textChannelId   String @id
+  textChannelName String
+  guildId         String
+  room            Room?
 }
