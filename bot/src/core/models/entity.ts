@@ -1,3 +1,5 @@
+import { Id } from '@/core/models/id';
+
 abstract class Entity {
   constructor(protected readonly _id: Id) {
 
@@ -13,3 +15,5 @@ abstract class Entity {
     return this.id.compareTo(A.id);
   }
 }
+
+export { Entity };

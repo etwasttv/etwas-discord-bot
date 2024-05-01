@@ -1,7 +1,7 @@
+import { Id } from '@/core/models/id';
+
 class VoiceChannelId extends Id {
   constructor(public readonly value: string) {
-    if (value.length !== 64)
-      throw Error("VoiceChannel Id is incorrect.");
     super();
   }
   compareTo(A: any): boolean {

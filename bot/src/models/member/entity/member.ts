@@ -1,3 +1,4 @@
+import { Entity } from '@/core/models/entity';
 import { IMemberNotification } from '@/models/member/repository/memberRepository';
 import { MemberId } from '@/models/member/valueObject/memberId';
 

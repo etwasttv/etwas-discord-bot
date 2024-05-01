@@ -1,58 +1,54 @@
 import { prisma } from '@/lib/prisma';
 import { Room } from '@/models/room/entity/room';
-import { RoomId } from '@/models/room/valueObject/roomId';
-import { TextChannelId } from '@/models/textChannel/valueObject/textChannelId';
-import { VoiceChannelId } from '@/models/voiceChannel/valueObject/voiceChannelId';
+import { VoiceChannelId } from '@/models/room/valueObject/voiceChannelId';
+import { VoiceChannelName } from '@/models/room/valueObject/voiceChannelName';
+import { GuildId } from '@/models/guild/valueObject/guildId';
+import { TextChannelId } from '@/models/room/valueObject/textChannelId';
 
 interface IRoomRepository {
-  findByVoiceChannelId(voiceChannelId: VoiceChannelId): Promise<Room | null>;
-  findByTextChannelId(textChannelId: TextChannelId): Promise<Room | null>;
-  save(room: Room): Promise<void>;
+  findById(id: VoiceChannelId): Promise<Room | null>;
+  save(voiceChannel: Room): Promise<void>;
 }
 
 class RoomRepository implements IRoomRepository {
-  async findByVoiceChannelId(voiceChannelId: VoiceChannelId): Promise<Room | null> {
-    const roomModel = await prisma.room.findUnique({
+  async findById(id: VoiceChannelId): Promise<Room | null> {
+    const voiceChannelModel = await prisma.room.findUnique({
       where: {
-        voiceChannelId: voiceChannelId.value,
+        voiceChannelId: id.value,
       },
     });
 
-    if (!roomModel)
+    if (!voiceChannelModel)
       return null;
 
-    return new Room(new RoomId(voiceChannelId, new TextChannelId(roomModel.textChannelId)));
+    return new Room(
+      id,
+      new VoiceChannelName(voiceChannelModel.voiceChannelName),
+      voiceChannelModel.textChannelId ? new TextChannelId(voiceChannelModel.textChannelId) : null,
+      new GuildId(voiceChannelModel.guildId),
+    );
   }
 
-  async findByTextChannelId(textChannelId: TextChannelId): Promise<Room | null> {
-    const roomModel = await prisma.room.findUnique({
-      where: {
-        voiceChannelId: textChannelId.value,
-      },
-    });
-
-    if (!roomModel)
-      return null;
-
-    return new Room(new RoomId(new VoiceChannelId(roomModel.voiceChannelId), textChannelId));
-  }
-
-  async save(room: Room) {
+  async save(voiceChannel: Room): Promise<void> {
     await prisma.room.upsert({
       where: {
-        voiceChannelId_textChannelId: {
-          voiceChannelId: room.id.voiceChannelId.value,
-          textChannelId: room.id.textChannelId.value,
-        },
+        voiceChannelId: voiceChannel.id.value,
       },
       update: {
-        voiceChannelId: room.id.voiceChannelId.value,
-        textChannelId: room.id.textChannelId.value,
+        voiceChannelName: voiceChannel.name.value,
+        textChannelId: voiceChannel.textChannelId ? voiceChannel.textChannelId.value : null,
       },
       create: {
-        voiceChannelId: room.id.voiceChannelId.value,
-        textChannelId: room.id.textChannelId.value,
+        voiceChannelId: voiceChannel.id.value,
+        voiceChannelName: voiceChannel.name.value,
+        textChannelId: voiceChannel.textChannelId ? voiceChannel.textChannelId.value : null,
+        guildId: voiceChannel.guildId.value,
       },
     });
   }
+}
+
+export {
+  IRoomRepository,
+  RoomRepository,
 }

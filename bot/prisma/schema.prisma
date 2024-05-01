@@ -15,24 +15,8 @@ model Member {
 }
 
 model Room {
-  voiceChannelId String @unique
-  voiceChannel   VoiceChannel @relation(fields: [voiceChannelId], references: [voiceChannelId], onDelete: Cascade)
-  textChannelId  String @unique
-  textChannel    TextChannel @relation(fields: [textChannelId], references: [textChannelId], onDelete: Cascade)
-
-  @@id([voiceChannelId, textChannelId])
-}
-
-model VoiceChannel {
   voiceChannelId   String @id
   voiceChannelName String
   guildId          String
-  room             Room?
-}
-
-model TextChannel {
-  textChannelId   String @id
-  textChannelName String
-  guildId         String
-  room            Room?
+  textChannelId    String? @unique
 }

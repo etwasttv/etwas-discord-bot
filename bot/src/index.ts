@@ -1,4 +1,4 @@
-import { readdir } from 'fs/promises';
+import { readdir, access } from 'fs/promises';
 import path from 'path';
 
 import {
@@ -8,12 +8,15 @@ import {
 } from 'discord.js';
 
 import { discordClient as CLIENT } from './core/discord-client';
-// import { BOT_TOKEN } from '../config.json';
+import { BOT_TOKEN } from '@/config.json';
 import { BotCommand } from './types/command';
 import { BotEvent } from './types/event';
-const BOT_TOKEN = "";
+import { existsSync } from 'fs';
 
 async function addEventListener(): Promise<number> {
+  if (!existsSync(path.resolve(__dirname, './events')))
+    return 0;
+
   const files = (await readdir(path.resolve(__dirname, './events'), { recursive: true }))
     .filter(f => path.extname(f) === '.ts' || path.extname(f) === '.js');
 
@@ -41,6 +44,9 @@ async function addEventListener(): Promise<number> {
 
 async function registerCommand(): Promise<number> {
   const commands = new Collection<string, BotCommand>();
+  if (!existsSync(path.resolve(__dirname, './commands')))
+    return 0;
+
   const files = await readdir(path.resolve(__dirname, './commands'));
   await Promise.all(files.map(async file => {
     try {
@@ -78,7 +84,7 @@ async function registerCommand(): Promise<number> {
 }
 
 async function main() {
-  if (BOT_TOKEN) {
+  if (!BOT_TOKEN) {
     console.log('TOKEN を指定して下さい');
     return;
   }

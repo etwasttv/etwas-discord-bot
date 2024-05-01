@@ -14,3 +14,5 @@ abstract class SingleValueObject extends ValueObject {
     return A._value === this._value;
   }
 }
+
+export { ValueObject, SingleValueObject };

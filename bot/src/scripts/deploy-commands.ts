@@ -1,7 +1,5 @@
 import fs from "fs";
-// import { BOT_TOKEN, BOT_CLIENT_ID } from "../../config.json";
-const BOT_TOKEN = "";
-const BOT_CLIENT_ID = "";
+import { BOT_TOKEN, BOT_CLIENT_ID } from "@/config.json";
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -14,10 +12,10 @@ import path from 'path';
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
   const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
-  const commandFiles = fs.readdirSync(path.resolve(__dirname, "./commands"));
+  const commandFiles = fs.readdirSync(path.resolve(__dirname, "../commands"));
 
   await Promise.all(commandFiles.map((file) => 
-      import(`./commands/${file}`)
+      import(`../commands/${file}`)
           .then(({ handler }: { handler: AppCommandHandler }) => {
               commands.push(handler.data.toJSON());
   })));

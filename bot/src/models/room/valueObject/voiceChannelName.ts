@@ -1,3 +1,5 @@
+import { SingleValueObject } from '@/core/models/valueObject';
+
 class VoiceChannelName extends SingleValueObject {
   constructor(value: string) {
     super(value);
