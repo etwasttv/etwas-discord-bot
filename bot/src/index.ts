@@ -1,139 +1,60 @@
+import { BOT_TOKEN } from '@/config.json';
+import { botClient } from '@/core/discord';
+import { BotCommand } from '@/types/command';
+import { Collection, Events } from 'discord.js';
+import { existsSync } from 'fs';
 import { readdir } from 'fs/promises';
-import {
-  Client,
-  Collection,
-  CommandInteraction,
-  Events,
-  GatewayIntentBits
-} from 'discord.js';
+import path from 'path';
 
-import { DiscordEventListener, AppCommandHandler, ComponentHandler } from './lib';
+async function loadCommands(): Promise<number> {
+  const commands = new Collection<string, BotCommand>();
+  const directoryPath = './commands';
+  if (!existsSync(path.resolve(__dirname, directoryPath)))
+    return 0;
 
-import { bot_info as BOTINFO } from './config.json';
-
-const CLIENT = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.MessageContent,
-  ]
-});
-
-export const CLIENTS = [CLIENT];
-
-async function addEventListener(): Promise<number> {
-  const files = await readdir('./events');
-
+  const files = await readdir(path.resolve(__dirname, directoryPath));
   await Promise.all(files.map(async file => {
-    const { listener } = await import(`./events/${file}`);
-    if (!(listener instanceof DiscordEventListener)) return;
-
-    if (listener.once) {
-      //  一度だけ実行するイベント
-      CLIENT.once(
-        (listener.eventName as string),
-        (...args) => listener.execute(...args)
-      );
-    } else {
-      //  毎回実行するイベント
-      CLIENT.on(
-        (listener.eventName as string),
-        (...args) => listener.execute(...args)
-      );
+    try {
+      const command: BotCommand = (await import(`${directoryPath}/${file}`)).default;
+      if (!command) return;
+      commands.set(command.builder.name, command);
+    } catch (e) {
+      console.error(e);
     }
   }));
 
-  return files.length;
-}
+  botClient.on(Events.InteractionCreate, async interaction => {
+    if (interaction.user.bot) return;
 
-async function addCommandHandler(): Promise<number> {
-  const handlers = new Collection<string, AppCommandHandler>();
-  const files = await readdir('./commands');
-
-  await Promise.all(files.map(async file => {
-    const { handler } = await import(`./commands/${file}`);
-
-    if (!(handler instanceof AppCommandHandler)) return;
-
-    handlers.set(handler.data.name, handler);
-  }));
-
-  const bHandlers = new Collection<string, ComponentHandler>();
-  const bFiles = await readdir('./components');
-
-  await Promise.all(bFiles.map(async file => {
-    const { handler } = await import(`./components/${file}`);
-    if (!(handler instanceof ComponentHandler)) return;
-
-    bHandlers.set(handler.id, handler);
-  }))
-
-  CLIENT.on(Events.InteractionCreate, async interaction => {
-    if (interaction.isButton() || interaction.isStringSelectMenu()) {
-      const handler = bHandlers.get(interaction.customId);
-      if (!handler) {
-        return;
-      }
+    if (interaction.isCommand()) {
       try {
-        await handler.handler(interaction);
-      } catch (err) {
-        console.error(err);
+        const command = commands.get(interaction.commandName);
+        if (!command) return;
+        await command.handler(interaction);
+      } catch (e) {
+        console.error(e);
         await interaction.reply({
-          content: 'There was an error while executing this button!',
+          content: 'There was an error while executing this command!',
           ephemeral: true,
         });
       }
-      return;
-    }
-
-    if (!interaction.isCommand()) return;
-
-    if (interaction.user.bot) return;
-
-    const handler = handlers.get(interaction.commandName);
-
-    if (!handler) return;
-
-    try {
-      await handler.handler(<CommandInteraction>interaction);
-    } catch (err) {
-      console.error(err);
-      await interaction.reply({
-        content: 'There was an error while executing this command!',
-        ephemeral: true,
-      });
     }
   });
 
-  return handlers.size;
+  return commands.size;
 }
 
 async function main() {
-  if (!BOTINFO[0].bot_token) {
+  if (!BOT_TOKEN) {
     console.log('TOKEN を指定して下さい');
     return;
   }
 
-  //  イベントを読み込む
-  const [eventNum, commandNum]
-    = await Promise.all([addEventListener(), addCommandHandler()]);
-  console.log(`${eventNum} 個のイベント，${commandNum} 個のコマンドを登録しました`);
+  await loadCommands();
 
   //  ログイン
-  console.log('Discord Botを起動します');
-  CLIENT.login(BOTINFO[0].bot_token);
-
-  for (let i=1; i<BOTINFO.length; i++) {
-    const c = new Client({intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildVoiceStates,
-    ]});
-    c.login(BOTINFO[i].bot_token);
-    CLIENTS.push(c);
-  }
+  console.log('Starting Bot');
+  await botClient.login(BOT_TOKEN);
 }
 
 main();

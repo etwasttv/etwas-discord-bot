@@ -9,33 +9,3 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-model Member {
-  id              String           @id
-  speakerId       Int              @default(3)
-  speedScale      Float            @default(1.0)
-  pitchScale      Float            @default(0.0)
-  intonationScale Float            @default(1.0)
-  roomId          String?
-  room            Room?            @relation(fields: [roomId], references: [voiceChannelId])
-  responses       CustomResponse[]
-}
-
-model Room {
-  voiceChannelId String  @id
-  useZundamon    Boolean @default(false)
-  roleId         String? @unique
-  textChannelId  String? @unique
-  members        Member[]
-}
-
-model CustomResponse {
-  id       Int    @id @default(autoincrement())
-  key      String
-  response String
-  guildId  String
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id])
-
-  @@unique([key, guildId])
-}
