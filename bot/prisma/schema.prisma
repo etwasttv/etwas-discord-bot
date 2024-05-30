@@ -9,3 +9,18 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Room {
+  roomId         String @id @default(uuid())
+  guildId        String
+  voiceChannelId String  @unique
+  textChannelId  String? @unique
+  voice          Boolean @default(false)
+}
+
+model Voice {
+  guildId   String
+  userId    String
+  speakerId Int
+  @@id([guildId, userId])
+}
