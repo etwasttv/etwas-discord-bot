@@ -1,0 +1,29 @@
+name: Deploy to B590
+
+on: [ workflow_dispatch ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: ./bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      - run: npm ci
+      - run: |
+          touch config.json
+          echo '{"BOT_TOKEN": "${{ secrets.BOT_TOKEN }}","BOT_CLIENT_ID": "${{ secrets.BOT_CLIENT_ID }}","VOICEVOX_ENDPOINT": "${{ secrets.VOICEVOX_ENDPOINT }}"}' >> config.json
+      - run: npm run build
+      - name: Deploy Application Command
+        run: npm run deploy-command
+      - run: |
+          touch .env
+          echo ${{ secrets.DATABASE }} >> .env
+      - run: npx prisma migrate deploy
+      - run: pm2 startOrRestart ecosystem.config.js --env production --update-env
