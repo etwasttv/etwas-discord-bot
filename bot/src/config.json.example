@@ -1,8 +1,5 @@
 {
-    "bot_info": [
-        {
-            "bot_token": "<your bot token>",
-            "client_id": "<your bot client id>"
-        }
-    ]
+    "BOT_TOKEN": "",
+    "BOT_CLIENT_ID": "",
+    "VOICEVOX_ENDPOINT": ""
 }
