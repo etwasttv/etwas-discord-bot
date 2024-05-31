@@ -3,7 +3,7 @@ import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
 import { prisma } from '@/core/prisma';
 import { VoiceService } from '@/services/Voice';
-import { ActionRowBuilder, ButtonBuilder, ChannelType, TextChannel, VoiceChannel } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ChannelType, OverwriteResolvable, TextChannel, VoiceChannel } from 'discord.js';
 
 class RoomService {
 
@@ -47,17 +47,22 @@ class RoomService {
       if (!textChannel) {
         console.log('[Room] Create a text channel corresponding to the voice channel as it does not exist.');
         //  テキストチャンネルを作成
+        const permissionOverwrites: OverwriteResolvable[] = voiceChannel.members
+          .filter(member => member.user.bot)
+          .map(member => ({
+            id: member,
+            allow: ['ViewChannel'],
+          }));
+        permissionOverwrites.push({
+          id: voiceChannel.guild.roles.everyone,
+          deny: ['ViewChannel'],
+        });
         textChannel = await voiceChannel.guild.channels.create({
           name: '通話用テキストチャンネル',
           topic: `${voiceChannel.name} に入室しているメンバーにのみ表示されるテキストチャンネル.`,
           type: ChannelType.GuildText,
           parent: voiceChannel.parent,
-          permissionOverwrites: voiceChannel.members
-            .filter(member => member.user.bot)
-            .map(member => ({
-              id: member,
-              allow: ['ViewChannel'],
-            })),
+          permissionOverwrites: permissionOverwrites,
         });
         await textChannel.send({ content: `このチャンネルは${voiceChannel.url}に入っている人だけに表示されます` });
         await textChannel.send({
