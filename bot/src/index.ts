@@ -1,7 +1,7 @@
 import { BOT_TOKEN } from '@/config.json';
 import { botClient } from '@/core/discord';
 import { BotCommand } from '@/types/command';
-import { ButtonHandler, ComponentHandler, StringSelectMenuHandler } from '@/types/component';
+import { ButtonHandler, StringSelectMenuHandler } from '@/types/component';
 import { BotEvent } from '@/types/event';
 import { Collection, Events } from 'discord.js';
 import { existsSync } from 'fs';
@@ -10,17 +10,17 @@ import path from 'path';
 
 
 async function addEventListener(): Promise<number> {
-  const directoryPath = './events';
-  if (!existsSync(path.resolve(__dirname, directoryPath)))
+  const directoryPath = 'events';
+  if (!existsSync(`${__dirname}/${directoryPath}`))
     return 0;
 
-  const files = (await readdir(path.resolve(__dirname, directoryPath), { recursive: true }))
+  const files = (await readdir(`${__dirname}/${directoryPath}`, { recursive: true }))
     .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
 
   console.log(files);
   await Promise.all(files.map(async file => {
     try {
-      const event: BotEvent = (await import(`${directoryPath}/${file}`)).default;
+      const event: BotEvent = (await import(`./${directoryPath}/${file}`)).default;
       if (!event) return;
       if (event.once)
         botClient.once(
@@ -39,13 +39,14 @@ async function addEventListener(): Promise<number> {
 async function loadButtonComponents(): Promise<number> {
   const handlers = new Collection<string, ButtonHandler>();
   const directoryPath = './handlers/buttons';
-  if (!existsSync(path.resolve(__dirname, directoryPath)))
+  if (!existsSync(`${__dirname}/${directoryPath}`))
     return 0;
 
-  const files = await readdir(path.resolve(__dirname, directoryPath));
+  const files = (await readdir(`${__dirname}/${directoryPath}`))
+    .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
   await Promise.all(files.map(async file => {
     try {
-      const handler: ButtonHandler = (await import(`${directoryPath}/${file}`)).default;
+      const handler: ButtonHandler = (await import(`./${directoryPath}/${file}`)).default;
       if (!handler) return;
       handlers.set(handler.customId, handler);
     } catch (e) {
@@ -76,13 +77,14 @@ async function loadButtonComponents(): Promise<number> {
 async function loadStringSelectMenuComponents(): Promise<number> {
   const handlers = new Collection<string, StringSelectMenuHandler>();
   const directoryPath = './handlers/stringSelectMenus';
-  if (!existsSync(path.resolve(__dirname, directoryPath)))
+  if (!existsSync(`${__dirname}/${directoryPath}`))
     return 0;
 
-  const files = await readdir(path.resolve(__dirname, directoryPath));
+  const files = (await readdir(`${__dirname}/${directoryPath}`))
+    .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
   await Promise.all(files.map(async file => {
     try {
-      const handler: StringSelectMenuHandler = (await import(`${directoryPath}/${file}`)).default;
+      const handler: StringSelectMenuHandler = (await import(`./${directoryPath}/${file}`)).default;
       if (!handler) return;
       handlers.set(handler.customId, handler);
     } catch (e) {
@@ -113,13 +115,14 @@ async function loadStringSelectMenuComponents(): Promise<number> {
 async function loadCommands(): Promise<number> {
   const commands = new Collection<string, BotCommand>();
   const directoryPath = './commands';
-  if (!existsSync(path.resolve(__dirname, directoryPath)))
+  if (!existsSync(`${__dirname}/${directoryPath}`))
     return 0;
 
-  const files = await readdir(path.resolve(__dirname, directoryPath));
+  const files = (await readdir(`${__dirname}/${directoryPath}`))
+    .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
   await Promise.all(files.map(async file => {
     try {
-      const command: BotCommand = (await import(`${directoryPath}/${file}`)).default;
+      const command: BotCommand = (await import(`./${directoryPath}/${file}`)).default;
       if (!command) return;
       commands.set(command.builder.name, command);
     } catch (e) {
