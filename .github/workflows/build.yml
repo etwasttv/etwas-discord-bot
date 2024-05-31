@@ -19,11 +19,12 @@ jobs:
       - run: |
           touch src/config.json
           echo '{"BOT_TOKEN": "${{ secrets.BOT_TOKEN }}","BOT_CLIENT_ID": "${{ secrets.BOT_CLIENT_ID }}","VOICEVOX_ENDPOINT": "${{ secrets.VOICEVOX_ENDPOINT }}"}' >> src/config.json
-      - run: npm run build
-      - name: Deploy Application Command
-        run: npm run deploy-command
       - run: |
           touch .env
           echo ${{ secrets.DATABASE }} >> .env
+      - name: Deploy Application Command
+        run: npm run deploy-command
       - run: npx prisma migrate deploy
+      - run: npx prisma generate
+      - run: npm run build
       - run: pm2 startOrRestart ecosystem.config.js --env production --update-env
