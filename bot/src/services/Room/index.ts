@@ -122,7 +122,13 @@ class RoomService {
     await Promise.all(voiceChannel
       .members
       .filter(vMember => !textChannel.members.has(vMember.id))
-      .map(vMember => textChannel.permissionOverwrites.create(vMember, { ViewChannel: true })));
+      .map(vMember => textChannel.permissionOverwrites.create(
+        vMember,
+        {
+          ViewChannel: true,
+          ReadMessageHistory: true,
+        }
+      )));
 
     //  ボイスチャンネルに入っていないメンバーをテキストチャンネルから削除
     await Promise.all(textChannel
