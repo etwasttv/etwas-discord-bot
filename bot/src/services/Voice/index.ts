@@ -8,9 +8,11 @@ class VoiceService {
 
   private URL = new RegExp('https?://[\\w!?/+\\-_~;.,*&@#=$%()\'[\\]]+', 'g');
   private CODEBLOCK = new RegExp(/```.*```/gsm);
+  private CODELINE = new RegExp(/`.*`/gsm);
   private convert(text: string) {
     let fixedText = text.replaceAll(this.URL, 'URL省略');
-    fixedText = fixedText.replaceAll(this.CODEBLOCK, 'コード省略');
+    fixedText = fixedText.replaceAll(this.CODEBLOCK, 'コードブロック省略');
+    fixedText = fixedText.replaceAll(this.CODELINE, 'コード省略');
     return fixedText;
   }
 
