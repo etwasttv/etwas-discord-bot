@@ -18,7 +18,7 @@ jobs:
       - run: npm ci
       - run: |
           touch src/config.json
-          echo '{"BOT_TOKEN": "${{ secrets.BOT_TOKEN }}","BOT_CLIENT_ID": "${{ secrets.BOT_CLIENT_ID }}","VOICEVOX_ENDPOINT": "${{ secrets.VOICEVOX_ENDPOINT }}"}' >> src/config.json
+          echo '{"BOT_TOKEN": "${{ secrets.BOT_TOKEN }}","BOT_CLIENT_ID": "${{ secrets.BOT_CLIENT_ID }}","VOICEVOX_ENDPOINT": "${{ secrets.VOICEVOX_ENDPOINT }}","CNNAPI_ENDPOINT": "${{ secrets.CNNAPI_ENDPOINT }}"}' >> src/config.json
       - run: |
           touch .env
           echo ${{ secrets.DATABASE }} >> .env
