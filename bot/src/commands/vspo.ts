@@ -34,7 +34,12 @@ const command: BotCommand = {
       const form = axios.toFormData({});
       form.append('image', file.data, { filename: 'image.png', contentType: 'image/png' });
       const predicted = await axios.postForm(`${CNNAPI_ENDPOINT}/vspo/v1`, form);
-      await interaction.editReply({ content: `この画像は \`${predicted.data[1]}\` じゃないかな～`, files: [image.url] });
+      let msg
+      if (predicted.data[2] > 0.95)
+        msg = `この画像は \`${predicted.data[1]}\` じゃないかな～`;
+      else
+        msg = `この画像は \`${predicted.data[1]}\` かもしれないし、そうじゃないかもしれない`;
+      await interaction.editReply({ content: msg, files: [image.url] });
     } catch (e) {
       console.error(e);
       await interaction.editReply({ content: '予期せぬエラーが発生しました', files: [image.url] });
