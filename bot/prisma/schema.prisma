@@ -24,3 +24,9 @@ model Voice {
   speakerId Int
   @@id([guildId, userId])
 }
+
+model Omikuji {
+  userId    String   @id
+  omikuji   String
+  updatedAt DateTime @updatedAt
+}
