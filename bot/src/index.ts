@@ -9,10 +9,12 @@ import { RoomService } from '@/services/Room';
 import { OmikujiService } from '@/services/Omikuji';
 import { OmikujiRepository } from '@/repositories/omikujiRepository';
 import { VoiceConfigRepository } from '@/repositories/voiceConfigRepository';
+import { RoomConfigRepository } from '@/repositories/roomConfigRepository';
 
 
 container.register('IOmikujiRepository', { useClass: OmikujiRepository });
 container.register('IVoiceConfigRepository', { useClass: VoiceConfigRepository });
+container.register('IRoomConfigRepository', { useClass: RoomConfigRepository });
 
 container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });

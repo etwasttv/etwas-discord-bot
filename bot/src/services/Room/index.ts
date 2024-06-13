@@ -5,8 +5,9 @@ import { inject, injectable } from 'tsyringe';
 import { VcOffButton } from '@/components/buttons/VcOffButton';
 import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
-import { prisma } from '@/core/prisma';
+import { RoomConfig } from '@/entities';
 import { type IVoiceService } from '@/services/Voice';
+import { type IRoomConfigRepository } from '@/repositories/roomConfigRepository';
 
 
 interface IRoomService {
@@ -19,7 +20,10 @@ interface IRoomService {
 
 @injectable()
 class RoomService implements IRoomService {
-  constructor(@inject('IVoiceService') private voiceService: IVoiceService) { }
+  constructor(
+    @inject('IVoiceService') private voiceService: IVoiceService,
+    @inject('IRoomConfigRepository') private repository: IRoomConfigRepository,
+  ) { }
 
   async syncRoom(voiceChannel: VoiceChannel) {
 
@@ -31,11 +35,7 @@ class RoomService implements IRoomService {
     const isVoiceChannelUsed = this.isVoiceChannelUsed(voiceChannel);
 
     await asyncLock.acquire(voiceChannel.id, async () => {
-      let room = await prisma.room.findUnique({
-        where: {
-          voiceChannelId: voiceChannel.id,
-        }
-      });
+      const room = await this.repository.findByVoiceChannelId(voiceChannel.id);
 
       if (!room || !room.textChannelId) {
         if (!isVoiceChannelUsed) {
@@ -94,35 +94,44 @@ class RoomService implements IRoomService {
         }
       }
 
-      await prisma.room.upsert({
-        where: {
-          voiceChannelId: voiceChannel.id,
-        },
-        update: {
-          textChannelId: isVoiceChannelUsed ? textChannel.id : null,
-        },
-        create: {
-          guildId: voiceChannel.guildId,
-          voiceChannelId: voiceChannel.id,
-          textChannelId: isVoiceChannelUsed ? textChannel.id : null,
-        },
-      });
+      if (!room)
+        await this.repository.create(new RoomConfig(
+          undefined,
+          voiceChannel.guildId,
+          voiceChannel.id,
+          isVoiceChannelUsed ? textChannel.id : null,
+          false,
+      ));
+      else
+        await this.repository.update(new RoomConfig(
+          room.roomId,
+          room.guildId,
+          room.voiceChannelId,
+          isVoiceChannelUsed ? textChannel.id : null,
+          room.voice,
+      ));
     });
   }
 
   async setVoice(voiceChannel: VoiceChannel, voice: boolean) {
-    await prisma.room.upsert({
-      where: {
-        voiceChannelId: voiceChannel.id,
-      },
-      create: {
-        voiceChannelId: voiceChannel.id,
-        guildId: voiceChannel.guildId,
-        voice: voice,
-      },
-      update: {
-        voice: voice,
-      }});
+    const room = await this.repository.findByVoiceChannelId(voiceChannel.id);
+
+    if (!room)
+      await this.repository.create(new RoomConfig(
+        undefined,
+        voiceChannel.guildId,
+        voiceChannel.id,
+        null,
+        voice,
+    ));
+    else
+      await this.repository.update(new RoomConfig(
+        room.roomId,
+        room.guildId,
+        room.voiceChannelId,
+        room.textChannelId,
+        voice,
+    ));
   }
 
   private isVoiceChannelUsed(voiceChannel: VoiceChannel) {
@@ -151,11 +160,7 @@ class RoomService implements IRoomService {
   }
 
   async getTextChannel(voiceChannel: VoiceChannel) {
-    const room = await prisma.room.findUnique({
-      where: {
-        voiceChannelId: voiceChannel.id,
-      }
-    });
+    const room = await this.repository.findByVoiceChannelId(voiceChannel.id);
 
     if (!room || !room.textChannelId)
       return undefined;
@@ -168,11 +173,7 @@ class RoomService implements IRoomService {
   }
 
   async getVoiceChannel(textChannel: TextChannel) {
-    const room = await prisma.room.findUnique({
-      where: {
-        textChannelId: textChannel.id,
-      }
-    });
+    const room = await this.repository.findByTextChannelId(textChannel.id);
 
     if (!room)
       return undefined;
