@@ -1,5 +1,6 @@
 import { prisma } from '@/core/prisma';
 import { User } from 'discord.js';
+import { injectable } from 'tsyringe';
 
 
 const OMIKUJI: { name: string, ratio: number }[] = [
@@ -24,7 +25,14 @@ if (omikujiIndex.length === 0) {
   }
 }
 
-class OmikujiService {
+
+interface IOmikujiService {
+  omikuji(user: User): Promise<string>;
+}
+
+
+@injectable()
+class OmikujiService implements IOmikujiService {
 
   async omikuji(user: User) {
     const today = new Date();
@@ -67,4 +75,4 @@ class OmikujiService {
   }
 }
 
-export { OmikujiService }
+export { type IOmikujiService, OmikujiService }

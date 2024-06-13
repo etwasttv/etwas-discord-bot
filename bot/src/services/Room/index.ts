@@ -1,13 +1,25 @@
+import { ActionRowBuilder, ButtonBuilder, ChannelType, OverwriteResolvable, TextChannel, VoiceChannel } from 'discord.js';
+
+import { inject, injectable } from 'tsyringe';
+
 import { VcOffButton } from '@/components/buttons/VcOffButton';
 import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
 import { prisma } from '@/core/prisma';
-import { VoiceService } from '@/services/Voice';
-import { ActionRowBuilder, ButtonBuilder, ChannelType, OverwriteResolvable, TextChannel, VoiceChannel } from 'discord.js';
+import { IVoiceService } from '@/services/Voice';
 
-class RoomService {
 
-  private voiceService = new VoiceService();
+interface IRoomService {
+  syncRoom(voiceChannel: VoiceChannel): Promise<void>;
+  setVoice(voiceChannel: VoiceChannel, voice: boolean): Promise<void>;
+  getTextChannel(voiceChannel: VoiceChannel): Promise<TextChannel|undefined>;
+  getVoiceChannel(textChannel: TextChannel): Promise<VoiceChannel|undefined>;
+}
+
+
+@injectable()
+class RoomService implements IRoomService {
+  constructor(@inject('IVoiceService') private voiceService: IVoiceService) { }
 
   async syncRoom(voiceChannel: VoiceChannel) {
 
@@ -173,4 +185,4 @@ class RoomService {
   }
 }
 
-export { RoomService }
+export { type IRoomService, RoomService }

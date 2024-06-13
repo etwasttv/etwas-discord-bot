@@ -1,8 +1,9 @@
-import { OmikujiService } from '@/services/Omikuji';
+import { IOmikujiService } from '@/services/Omikuji';
 import { BotCommand } from '@/types/command';
 import { SlashCommandBuilder } from 'discord.js';
+import { container } from 'tsyringe';
 
-const omikujiService = new OmikujiService();
+const omikujiService = container.resolve<IOmikujiService>('IOmikujiService');
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()
