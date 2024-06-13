@@ -1,10 +1,11 @@
-import { VcOffButton } from '@/components/buttons/VcOffButton';
-import { VcOnButton } from '@/components/buttons/VcOnButton';
-import { IRoomService } from '@/services/Room';
-import { IVoiceService } from '@/services/Voice';
-import { BotCommand } from '@/types/command';
 import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, TextChannel } from 'discord.js';
 import { container } from 'tsyringe';
+
+import { VcOffButton } from '@/components/buttons/VcOffButton';
+import { VcOnButton } from '@/components/buttons/VcOnButton';
+import { BotCommand } from '@/types/command';
+import { type IRoomService } from '@/services/Room';
+import { type IVoiceService } from '@/services/Voice';
 
 const voiceService = container.resolve<IVoiceService>('IVoiceService');
 const roomService = container.resolve<IRoomService>('IRoomService');

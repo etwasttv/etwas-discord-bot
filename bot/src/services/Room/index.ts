@@ -6,7 +6,7 @@ import { VcOffButton } from '@/components/buttons/VcOffButton';
 import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
 import { prisma } from '@/core/prisma';
-import { IVoiceService } from '@/services/Voice';
+import { type IVoiceService } from '@/services/Voice';
 
 
 interface IRoomService {

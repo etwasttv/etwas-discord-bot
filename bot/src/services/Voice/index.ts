@@ -1,11 +1,11 @@
+import { Guild, User, VoiceChannel } from 'discord.js';
+import { inject, injectable } from 'tsyringe';
+
 import { generateQuery, generateVoice } from '@/core/voice';
 import { VoiceConfig } from '@/entities';
-import { IVoiceConfigRepository } from '@/repositories/voiceConfigRepository';
+import { type IVoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 import { AudioPlayer, VoiceConnectionReadyState, VoiceConnectionStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
-import { Guild, User, VoiceChannel } from 'discord.js';
-import { injectable } from 'inversify';
 import { Readable } from 'stream';
-import { inject } from 'tsyringe';
 
 interface IVoiceService {
   setSpeaker(guild: Guild, user: User, speakerId: number): Promise<void>;

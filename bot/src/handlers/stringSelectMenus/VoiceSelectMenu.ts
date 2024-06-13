@@ -1,8 +1,9 @@
-import { VoiceSelectMenu } from '@/components/stringSelectMenus/VoiceSelectMenu';
-import { IVoiceService } from '@/services/Voice';
-import { StringSelectMenuHandler } from '@/types/component';
 import { ActionRowBuilder, StringSelectMenuBuilder } from 'discord.js';
 import { container } from 'tsyringe';
+
+import { VoiceSelectMenu } from '@/components/stringSelectMenus/VoiceSelectMenu';
+import { type IVoiceService } from '@/services/Voice';
+import { StringSelectMenuHandler } from '@/types/component';
 
 const voiceService = container.resolve<IVoiceService>('IVoiceService');
 

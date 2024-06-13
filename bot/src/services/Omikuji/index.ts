@@ -1,5 +1,5 @@
 import { Omikuji } from '@/entities';
-import { IOmikujiRepository } from '@/repositories/omikujiRepository';
+import { type IOmikujiRepository } from '@/repositories/omikujiRepository';
 import { User } from 'discord.js';
 import { inject, injectable } from 'tsyringe';
 
