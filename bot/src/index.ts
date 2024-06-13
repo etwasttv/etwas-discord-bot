@@ -8,13 +8,15 @@ import { VoiceService } from '@/services/Voice';
 import { RoomService } from '@/services/Room';
 import { OmikujiService } from '@/services/Omikuji';
 import { OmikujiRepository } from '@/repositories/omikujiRepository';
+import { VoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 
 
 container.register('IOmikujiRepository', { useClass: OmikujiRepository });
+container.register('IVoiceConfigRepository', { useClass: VoiceConfigRepository });
 
+container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
-container.register('IVoiceService', { useClass: VoiceService });
 
 
 const discordClient = container.resolve(DiscordClient);

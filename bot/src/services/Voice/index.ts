@@ -1,9 +1,11 @@
-import { prisma } from '@/core/prisma';
 import { generateQuery, generateVoice } from '@/core/voice';
+import { VoiceConfig } from '@/entities';
+import { IVoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 import { AudioPlayer, VoiceConnectionReadyState, VoiceConnectionStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
 import { Guild, User, VoiceChannel } from 'discord.js';
 import { injectable } from 'inversify';
 import { Readable } from 'stream';
+import { inject } from 'tsyringe';
 
 interface IVoiceService {
   setSpeaker(guild: Guild, user: User, speakerId: number): Promise<void>;
@@ -17,6 +19,8 @@ interface IVoiceService {
 @injectable()
 class VoiceService implements IVoiceService {
 
+  constructor(@inject('IVoiceConfigRepository') private _repository: IVoiceConfigRepository) { }
+
   private URL = new RegExp('https?://[\\w!?/+\\-_~;.,*&@#=$%()\'[\\]]+', 'g');
   private CODEBLOCK = new RegExp(/```.*```/gsm);
   private CODELINE = new RegExp(/`.*`/gsm);
@@ -28,35 +32,24 @@ class VoiceService implements IVoiceService {
   }
 
   async setSpeaker(guild: Guild, user: User, spakerId: number) {
-    await prisma.voice.upsert({
-      where: {
-        guildId_userId: {
-          guildId: guild.id,
-          userId: user.id,
-        },
-      },
-      update: {
-        speakerId: spakerId,
-      },
-      create: {
-        guildId: guild.id,
-        userId: user.id,
-        speakerId: spakerId,
-      }
-    });
+    const exist = await this._repository.find(guild.id, user.id);
+
+    const config = new VoiceConfig(
+      guild.id,
+      user.id,
+      spakerId,
+    );
+
+    if (!exist)
+      await this._repository.create(config);
+    else
+      await this._repository.update(config);
   }
 
   async getSpeakerId(guild: Guild, user: User) {
-    const voice = await prisma.voice.findUnique({
-      where: {
-        guildId_userId: {
-          guildId: guild.id,
-          userId: user.id,
-        }
-      }
-    });
+    const config = await this._repository.find(guild.id, user.id);
 
-    return voice?.speakerId ?? 3;
+    return config?.speakerId ?? 3;
   }
 
   async read(voiceChannel: VoiceChannel, user: User, text: string) {
