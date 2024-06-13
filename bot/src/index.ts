@@ -7,7 +7,10 @@ import { DiscordClient } from '@/core/discord';
 import { VoiceService } from '@/services/Voice';
 import { RoomService } from '@/services/Room';
 import { OmikujiService } from '@/services/Omikuji';
+import { OmikujiRepository } from '@/repositories/omikujiRepository';
 
+
+container.register('IOmikujiRepository', { useClass: OmikujiRepository });
 
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
