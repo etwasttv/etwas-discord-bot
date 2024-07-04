@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { BOT_TOKEN, BOT_CLIENT_ID } from "@/config.json";
 import {
   REST,
@@ -7,6 +9,21 @@ import {
 
 import fs from 'fs/promises';
 import { BotCommand } from '@/types/command';
+import { OmikujiRepository } from '@/repositories/omikujiRepository';
+import { RoomConfigRepository } from '@/repositories/roomConfigRepository';
+import { VoiceConfigRepository } from '@/repositories/voiceConfigRepository';
+import { OmikujiService } from '@/services/Omikuji';
+import { RoomService } from '@/services/Room';
+import { VoiceService } from '@/services/Voice';
+import { container } from 'tsyringe';
+
+container.register('IOmikujiRepository', { useClass: OmikujiRepository });
+container.register('IVoiceConfigRepository', { useClass: VoiceConfigRepository });
+container.register('IRoomConfigRepository', { useClass: RoomConfigRepository });
+
+container.register('IVoiceService', { useClass: VoiceService });
+container.register('IOmikujiService', { useClass: OmikujiService });
+container.register('IRoomService', { useClass: RoomService });
 
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
