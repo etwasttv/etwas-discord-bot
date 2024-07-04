@@ -3,6 +3,8 @@ import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
 
 import { CNNAPI_ENDPOINT } from 'config.json';
 
+const WINDS = ['東', '南', '西', '北'];
+
 const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('mahjong')
@@ -21,8 +23,12 @@ const command: BotCommand = {
       }
 
       const buffer = await response.arrayBuffer();
+      const selfWind = Math.floor(Math.random() * 4);
+      const fieldWind = Math.floor(Math.random() * 2);
+      let situation = `${WINDS[fieldWind]}場・${WINDS[selfWind]}家`;
 
       await interaction.editReply({
+        content: situation,
         files: [new AttachmentBuilder(Buffer.from(buffer), {
           name: 'mahjong.png',
         })],
