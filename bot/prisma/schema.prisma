@@ -30,3 +30,16 @@ model Omikuji {
   omikuji   String
   updatedAt DateTime @updatedAt
 }
+
+model TwitchNotificationSubscription {
+  broadcasterUserId String @id
+  subscriptionId    String? @unique
+}
+
+model TwitchNotificationChannel {
+  guildId           String
+  channelId         String
+  broadcasterUserId String
+
+  @@id([guildId, channelId, broadcasterUserId])
+}
