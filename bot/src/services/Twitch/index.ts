@@ -1,233 +1,146 @@
-import { GetUsersResponse } from '@/services/Twitch/types';
-import axios, { AxiosInstance } from 'axios';
-import { singleton } from 'tsyringe';
-import { connection, client as WebSocket } from 'websocket';
+// import { asyncLock } from '@/core/async-lock';
+// import { ITwitchNotificationChannelRepository } from '@/repositories/twitchNotificationChannelRepository';
+// import { ITwitchNotificationSubscriptionRepository } from '@/repositories/twitchNotificationSubscription';
+// import { TwitchApiClient } from '@/services/Twitch/apiClient';
+// import { inject, singleton } from 'tsyringe';
+// import { connection, client as WebSocket } from 'websocket';
 
-interface ITwitchAPIService {
-  subscribe(userId: string): Promise<void>;
-}
+// interface ITwitchAPIService {
+//   subscribe(login: string): Promise<void>;
+// }
 
-const EventSubWebSocket = 'wss://eventsub.wss.twitch.tv/ws';
-@singleton()
-class TwitchAPIService implements ITwitchAPIService {
+// const EventSubWebSocket = 'wss://eventsub.wss.twitch.tv/ws';
+// @singleton()
+// class TwitchAPIService implements ITwitchAPIService {
 
-  private eventSubWebSocket: WebSocket|null = null;
-  private lastActiveAt: Date = new Date();
-  private sessionId: string|null = null;
-  private apiClient: AxiosInstance|null = null;
-  private conduitId?: string;
-  private async getApiClient() {
-    const response = await axios.postForm('https://id.twitch.tv/oauth2/token', {
-      client_id: 'u5pta422b8m970x6c8lb7wdqdjx36o',  //  TODO: 環境変数にする
-      client_secret: 'xokxytmfyf4l8jxbfwbvp1dfcr73tl',  //  TODO: 環境変数にする
-      grant_type: 'client_credentials',
-    });
+//   private eventSubWebSocket: WebSocket|null = null;
+//   private apiClient: TwitchApiClient;
 
-    if (response.status !== 200)
-      throw new Error('Could not get access token');
+//   constructor(
+//     @inject('ITwitchNotificationSubscriptionRepository') private twitchNotificationSubscriptionRepository: ITwitchNotificationSubscriptionRepository,
+//     @inject('ITwitchNotificationChannelRepository') private twitchNotificationChannelRepository: ITwitchNotificationChannelRepository,
+//   ) {
+//     this.apiClient = new TwitchApiClient();
+//     this.init();
+//   }
 
-    const token = response.data['access_token'];
-    const interval = response.data['expires_in'];
+//   private async init() {
+//     await this.deleteAllConduit();
+//     await this.deleteEventSubSubscriptions();
+//   }
 
-    this.apiClient = axios.create({
-      baseURL: 'https://api.twitch.tv/',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Client-Id': 'u5pta422b8m970x6c8lb7wdqdjx36o',
-      }
-    });
+//   private async initEventSubWebSocket() {
+//     return await asyncLock.acquire('initEventSubWebSocket', async () => {
+//       if (this.eventSubWebSocket) return this.eventSubWebSocket;
+//       await this.createSocket(EventSubWebSocket);
+//       return this.eventSubWebSocket;
+//     });
+//   }
 
-    setTimeout(async () => {
-      await this.getApiClient();
-    }, interval);
+//   private async getConduit() {
+//     const conduits = await this.apiClient.getConduits();
+//     console.log(conduits);
+//     const conduit = conduits.data.length === 0 ? await (await this.apiClient.createConduits(1)).data[0] : conduits.data[0];
+//     console.log(conduit);
+//     return conduit;
+//   }
 
-    return this.apiClient;
-  }
+//   private async deleteAllConduit() {
+//     const conduits = await this.apiClient.getConduits();
+//     for (const conduit of conduits.data) {
+//       await this.apiClient.deleteConduits(conduit.id);
+//     }
+//   }
 
-  private async initEventSubWebSocket() {
-    if (this.eventSubWebSocket) return this.eventSubWebSocket;
-    this.eventSubWebSocket = await this.createSocket(EventSubWebSocket);
-    return this.eventSubWebSocket;
-  }
+//   private async deleteEventSubSubscriptions() {
+//     const subscriptions = await this.apiClient.getEventSubSubscription();
+//     for ( const subscription of subscriptions.data.filter(sub => sub.status !== 'enabled')) {
+//       await this.apiClient.deleteEventSubSubscription(subscription.id);
+//     }
+//   }
 
-  private async initConduit() {
-    const api = await this.getApiClient();
-    const { data: condit }: { data: GetConduitsResponse } = await api.post('/helix/eventsub/conduits', {
-      'shard_count': '1'
-    });
-    console.log(condit);
-    this.conduitId = condit.data[0].id;
-    await this.initEventSubWebSocket();
-    await api.patch('/helix/eventsub/conduits/shards', {
-      'conduit_id': this.conduitId,
-      'shards': [{
-        'id': '0',
-        'transport': {
-          'method': 'websocket',
-          'session_id': this.sessionId,
-        }
-      }]
-    });
-    return condit.data[0].id;
-  }
+//   async subscribe(login: string): Promise<void> {
+//     const users = await this.apiClient.getUsers({logins: [login]});
+//     const conduit = await this.getConduit();
+//     this.initEventSubWebSocket();
+//     if (users.data.length === 0) throw new Error('User not found');
+//     const response = await this.apiClient.createEventSubSubscription({
+//       type: 'stream.online',
+//       version: '1',
+//       condition: {
+//         broadcaster_user_id: users.data[0].id,
+//       },
+//       transport: {
+//         method: 'conduit',
+//         conduit_id: conduit.id,
+//       }
+//     });
+//     console.log(response);
+//   }
 
-  private async getUser(login: string) {
-    const api = this.apiClient ?? await this.getApiClient();
-    const response = await api.get('https://api.twitch.tv/helix/users', {
-      params: { 'login': login }
-    });
+//   private async createSocket(url: string, oldConnection: connection|null = null) {
+//     return new Promise<WebSocket>((resolve, reject) => {
+//       const socket = new WebSocket();
+//       socket.on('connect', connection => {
+//         connection.on('message', message => {
+//           if (message.type === 'utf8') {
+//             const data = JSON.parse(message.utf8Data);
+//             const messageType = data['metadata']['message_type'];
+//             if (messageType === 'session_welcome') {
+//               this.handleWelcome(data);
+//               oldConnection?.close();
+//               resolve(socket);
+//             }
+//             else if (messageType === 'session_keepalive') {
+//               this.handleKeepalive(data);
+//             }
+//             else if (messageType === 'session_reconnect') {
+//               this.handleReconnect(data, connection);
+//             }
+//             else if (messageType === 'notification') {
+//               this.handleNotification(data);
+//             }
+//             else console.log(data);
+//           }
+//         });
+//         connection.on('close', (code, docs) => {
+//           console.log('[TwitchService] connection closed', code, docs);
+//           if (this.eventSubWebSocket === socket) {
+//             console.log('[TwitchService] eventSubWebSocket = null');
+//             this.eventSubWebSocket = null;
+//           }
+//         });
+//       });
+//       socket.on('connectFailed', reject);
+//       socket.connect(url);
+//       this.eventSubWebSocket = socket;
+//     });
+//   }
 
-    if (response.status === 200)
-      return response.data as GetUsersResponse;
-    else
-      return null;
-  }
-
-  async subscribe(login: string): Promise<void> {
-    await this.initConduit();
-
-    const users = await this.getUser(login);
-    if (!users || users?.data.length < 1) return;
-    const body: StreamOnlineRequest = {
-      type: 'stream.online',
-      version: '1',
-      condition: {
-        broadcaster_user_id: users.data[0].id,
-      },
-      transport: {
-        method: 'conduit',
-        conduit_id: this.conduitId!,
-      },
-    }
-    try {
-      const api = this.apiClient ?? await this.getApiClient();
-      const response = await api.post('/helix/eventsub/subscriptions', body, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      console.log(response.status, response.data);
-    } catch (e) {
-      console.error(e);
-      console.error('[TwitchService] Can not subscribe event');
-    }
-  }
-
-  private async createSocket(url: string, oldConnection: connection|null = null) {
-    return new Promise<WebSocket>((resolve, reject) => {
-      const socket = new WebSocket();
-      socket.on('connect', connection => {
-        connection.on('message', message => {
-          if (message.type === 'utf8') {
-            const data = JSON.parse(message.utf8Data);
-            const messageType = data['metadata']['message_type'];
-            if (messageType === 'session_welcome') {
-              this.handleWelcome(data);
-              oldConnection?.close();
-              resolve(socket);
-            }
-            else if (messageType === 'session_keepalive') {
-              this.handleKeepalive(data);
-            }
-            else if (messageType === 'session_reconnect') {
-              this.handleReconnect(data, connection);
-            }
-            else if (messageType === 'notification') {
-              this.handleNotification(data);
-            }
-            else console.log(data);
-          }
-        });
-        connection.on('close', (code, docs) => {
-          console.log('[TwitchService] connection closed', code, docs);
-          if (this.eventSubWebSocket === socket) {
-            console.log('[TwitchService] eventSubWebSocket = null');
-            this.eventSubWebSocket = null;
-          }
-        });
-      });
-      socket.on('connectFailed', reject);
-      socket.connect(url);
-      this.eventSubWebSocket = socket;
-    });
-  }
-
-  private async handleWelcome(data: WelcomeMessage) {
-    console.log(data);
-    this.sessionId = data.payload.session.id;
-  }
-  private handleKeepalive(data: KeepaliveMessage) {
-    console.log('Keepalive');
-    this.lastActiveAt = new Date();
-  }
-  private async handleReconnect(data: ReconnectMessage, currentConnection: connection) {
-    console.log('Reconnect');
-    await this.createSocket(data.payload.session.reconnect_url, currentConnection);
-  }
-  private handleNotification(data: any) {
-    console.log(data);
-  }
-}
-
-type GetConduitsResponse = {
-  data: {
-    id: string;
-    shard_count: number;
-  }[]
-}
-
-type StreamOnlineRequest = {
-  type: 'stream.online';
-  version: '1';
-  condition: {
-    broadcaster_user_id: string;
-  }
-  transport: {
-    method: 'conduit';
-    conduit_id: string;
-  }
-}
-
-type WelcomeMessage = {
-  metadata: {
-    message_id: string;
-    message_type: string;
-    message_timestamp: string;
-  }
-  payload: {
-    session: {
-      id: string;
-      status: string;
-      keepalive_timeout_second: number;
-      reconnect_url: string;
-      connected_at: string;
-      recovery_url: string;
-    }
-  }
-}
-type KeepaliveMessage = {
-  metadata: {
-    message_id: string;
-    message_type: string;
-    message_timestamp: string;
-  }
-  payload: {}
-}
-type ReconnectMessage = {
-  metadata: {
-    message_id: string;
-    message_type: string;
-    message_timestamp: string;
-  }
-  payload: {
-    session: {
-      id: string;
-      status: string;
-      keepalive_timeout_secconds: null;
-      reconnect_url: string;
-      connected_at: string;
-    }
-  }
-}
-
-export { type ITwitchAPIService, TwitchAPIService }
+//   private async handleWelcome(data: WelcomeMessage) {
+//     console.log('Welcome');
+//     const conduit = await this.getConduit();
+//     await this.apiClient.updateConduitShareds({
+//       conduit_id: conduit.id,
+//       shards: [{
+//         id: '0',
+//         transport: {
+//           method: 'websocket',
+//           session_id: data.payload.session.id,
+//         }
+//       }]});
+//   }
+//   private async handleKeepalive(data: KeepaliveMessage) {
+//     console.log('Keepalive');
+//     await this.deleteEventSubSubscriptions();
+//     const subscriptions = await this.apiClient.getEventSubSubscription();
+//     console.log(subscriptions.data);
+//   }
+//   private async handleReconnect(data: ReconnectMessage, currentConnection: connection) {
+//     console.log('Reconnect');
+//     await this.createSocket(data.payload.session.reconnect_url, currentConnection);
+//   }
+//   private handleNotification(data: any) {
+//     console.log(data);
+//   }
+// }

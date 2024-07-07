@@ -10,20 +10,30 @@ import { OmikujiService } from '@/services/Omikuji';
 import { OmikujiRepository } from '@/repositories/omikujiRepository';
 import { VoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 import { RoomConfigRepository } from '@/repositories/roomConfigRepository';
-import { type ITwitchAPIService, TwitchAPIService } from '@/services/Twitch';
+import { TwitchEventSubSubscriptionRepository } from '@/repositories/TwitchEventSubSubscription';
+import { TwitchNotificationChannelRepository } from '@/repositories/TwitchNotificationChannelRepository';
+import { TwitchApiClient } from '@/services/Twitch/TwitchApiClient';
+import { TwitchNotificationChannelService } from '@/services/Twitch/TwitchNotificationChannelService';
+import { ITwitchEventSubService, TwitchEventSubService } from '@/services/Twitch/TwitchEventSubService';
 
+container.register('DiscordClient', { useClass: DiscordClient });
 
 container.register('IOmikujiRepository', { useClass: OmikujiRepository });
 container.register('IVoiceConfigRepository', { useClass: VoiceConfigRepository });
 container.register('IRoomConfigRepository', { useClass: RoomConfigRepository });
+container.register('ITwitchEventSubSubscriptionRepository', { useClass: TwitchEventSubSubscriptionRepository });
+container.register('ITwitchNotificationChannelRepository', { useClass: TwitchNotificationChannelRepository });
 
+container.register('TwitchApiClient', { useClass: TwitchApiClient });
+
+container.register('ITwitchEventSubService', { useClass: TwitchEventSubService });
+container.register('ITwitchNotificationChannelService', { useClass: TwitchNotificationChannelService });
 container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
-container.register('ITwitchAPIService', { useClass: TwitchAPIService });
 
 
-const discordClient = container.resolve(DiscordClient);
+const discordClient = container.resolve<DiscordClient>('DiscordClient');
 
 async function main() {
   if (!BOT_TOKEN) {
@@ -38,11 +48,9 @@ async function main() {
   await discordClient.login(BOT_TOKEN);
   console.log('Starting Bot');
 
-  const service = container.resolve<ITwitchAPIService>('ITwitchAPIService');
+  const service = container.resolve<ITwitchEventSubService>('ITwitchEventSubService');
 
-  setTimeout(() => {
-    service.subscribe('etw4s_');
-  }, 1000);
+  setTimeout(() => service.subscribe('etw4s_'), 4000);
 }
 
 main();

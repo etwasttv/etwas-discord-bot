@@ -1,7 +1,6 @@
 import { BotCommand } from '@/types/command';
-import { CommandInteractionOptionResolver, Encoding, SlashCommandBuilder } from 'discord.js';
+import { CommandInteractionOptionResolver, SlashCommandBuilder } from 'discord.js';
 import { parse } from 'csv-parse';
-import { Readable } from 'stream';
 import axios from 'axios';
 
 const command: BotCommand = {
