@@ -39,7 +39,7 @@ const command: BotCommand = {
     const options = interaction.options as CommandInteractionOptionResolver;
     const subCommand = options.getSubcommand();
 
-    if (subCommand === 'subscribe') {
+    if (subCommand === 'add') {
       const login = options.getString('login');
       if (!login) {
         await interaction.reply({
@@ -57,7 +57,7 @@ const command: BotCommand = {
         content: `配信開始通知を設定しました\nlogin: ${login}`,
       });
     }
-    else if (subCommand === 'unsubscribe') {
+    else if (subCommand === 'delete') {
       const login = options.getString('login');
       if (!login) {
         await interaction.reply({
@@ -75,7 +75,7 @@ const command: BotCommand = {
         content: `配信開始通知の設定を削除しました。login: ${login}`,
       });
     }
-    else if (subCommand === 'subscriptions') {
+    else if (subCommand === 'list') {
       const infos = await twitchNotificationChannelService.getSubscriptionList(interaction.guildId, interaction.channelId);
       if (infos.length === 0) {
         await interaction.reply(`${interaction.channel} では配信開始通知が設定していません。`)
