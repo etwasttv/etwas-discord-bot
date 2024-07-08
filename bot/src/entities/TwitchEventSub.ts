@@ -1,4 +1,4 @@
-class TwitchNotificationChannel {
+class TwitchEventSub {
   constructor(
     public readonly guildId: string,
     public readonly channelId: string,
@@ -6,4 +6,4 @@ class TwitchNotificationChannel {
   ) { }
 }
 
-export { TwitchNotificationChannel }
+export { TwitchEventSub }

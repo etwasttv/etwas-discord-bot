@@ -1,5 +1,7 @@
+import { GetUsersResponse } from '@/services/Twitch/types';
 import axios, { AxiosInstance } from 'axios';
 import { singleton } from 'tsyringe';
+import 'dotenv/config';
 
 @singleton()
 export class TwitchApiClient {
@@ -8,8 +10,8 @@ export class TwitchApiClient {
 
   private async getApiClient() {
     const response = await axios.postForm('https://id.twitch.tv/oauth2/token', {
-      client_id: 'u5pta422b8m970x6c8lb7wdqdjx36o',  //  TODO: 環境変数にする
-      client_secret: 'xokxytmfyf4l8jxbfwbvp1dfcr73tl',  //  TODO: 環境変数にする
+      client_id: process.env.TWITCH_CLIENT_ID!,
+      client_secret: process.env.TWITCH_CLIENT_SECRET!,
       grant_type: 'client_credentials',
     });
 
@@ -36,9 +38,9 @@ export class TwitchApiClient {
 
   async getUsers(request: GetUsersRequest): Promise<GetUsersResponse> {
     const api = this.apiClient ?? await this.getApiClient();
-    const response = await api.get('/helix/users', {
-      params: { 'login': request.logins, 'ids': request.ids },
-    });
+    const logins = request.logins?.map(i => `login=${i}`) ?? [];
+    const params = logins.concat(request.ids?.map(i => `id=${i}`) ?? []);
+    const response = await api.get(`/helix/users${params.length > 0 ? `?${params.join('&')}` : ''}`);
     return response.data as GetUsersResponse;
   }
 
@@ -128,21 +130,6 @@ type GetUsersRequest = {
   ids?: string[];
   logins?: string[];
 };
-type GetUsersResponse = {
-  data: {
-    id: string;
-    login: string;
-    display_name: string;
-    type: 'admin'|'global'|'staff'|'';
-    broadcaster_type: 'affiliate'|'partner'|'';
-    description: string;
-    profile_image_url: string;
-    offline_image_url: string;
-    view_count: number;
-    email: string;
-    created_at: string;
-  }[]
-}
 type CreateEventSubSubscriptionRequest = {
   type: 'stream.online'|'stream.offline';
   version: '1',
@@ -186,7 +173,7 @@ type GetEventSubSubscriptionResponse = {
       |'websocket_network_error';
     type: string;
     version: string;
-    condition: {}
+    condition: any;
     created_at: string;
     transport: {
       method: string;

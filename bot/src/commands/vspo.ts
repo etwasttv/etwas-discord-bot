@@ -1,6 +1,5 @@
 import { BotCommand } from '@/types/command';
 import { CommandInteractionOptionResolver, SlashCommandBuilder } from 'discord.js';
-import { CNNAPI_ENDPOINT } from 'config.json';
 import axios from 'axios';
 
 const command: BotCommand = {
@@ -33,7 +32,7 @@ const command: BotCommand = {
       });
       const form = axios.toFormData({});
       form.append('image', file.data, { filename: 'image.png', contentType: 'image/png' });
-      const predicted = await axios.postForm(`${CNNAPI_ENDPOINT}/vspo/v1`, form);
+      const predicted = await axios.postForm(`${process.env.CNNAPI_ENDPOINT!}/vspo/v1`, form);
       let msg
       if (predicted.data[2] > 0.95)
         msg = `この画像は \`${predicted.data[1]}\` じゃないかな～`;

@@ -1,8 +1,6 @@
 import { BotCommand } from '@/types/command';
 import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
 
-import { CNNAPI_ENDPOINT } from 'config.json';
-
 const WINDS = ['東', '南', '西', '北'];
 
 const command: BotCommand = {
@@ -14,7 +12,7 @@ const command: BotCommand = {
     await interaction.deferReply();
 
     try {
-      const response = await fetch(`${CNNAPI_ENDPOINT}/mahjong/tiledealingimg`);
+      const response = await fetch(`${process.env.CNNAPI_ENDPOINT!}/mahjong/tiledealingimg`);
       if (!response.ok) {
         await interaction.editReply({
           content: ':mahjong:',

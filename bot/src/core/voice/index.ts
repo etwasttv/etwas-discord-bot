@@ -1,5 +1,4 @@
 import httpAsync from '@/core/httpAsync';
-import { VOICEVOX_ENDPOINT } from '@/config.json';
 
 type Speakers = {
   name: string,
@@ -13,7 +12,7 @@ type Speakers = {
 
 async function getSpeakers() {
   const response = await httpAsync.request(
-    `${VOICEVOX_ENDPOINT}/speakers`,
+    `${process.env.VOICEVOX_ENDPOINT!}/speakers`,
     {
       method: 'GET',
     }, '');
@@ -28,7 +27,7 @@ async function generateVoice(query: Buffer, spakerId: number, speedScale: number
   queryObject['speedScale'] = speedScale;
   const requestQuery = Buffer.from(JSON.stringify(queryObject));
   return httpAsync.request(
-    `${VOICEVOX_ENDPOINT}/synthesis?speaker=${spakerId}`,
+    `${process.env.VOICEVOX_ENDPOINT!}/synthesis?speaker=${spakerId}`,
     {
       method: 'POST',
       headers: {
@@ -40,7 +39,7 @@ async function generateVoice(query: Buffer, spakerId: number, speedScale: number
 
 async function generateQuery(text: string, speakerId: number) {
   return httpAsync.request(
-    `${VOICEVOX_ENDPOINT}/audio_query?speaker=${speakerId}&text=${encodeURIComponent(text)}`,
+    `${process.env.VOICEVOX_ENDPOINT!}/audio_query?speaker=${speakerId}&text=${encodeURIComponent(text)}`,
     {
       method: 'POST',
     }, null);

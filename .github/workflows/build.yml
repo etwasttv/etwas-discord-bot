@@ -17,11 +17,14 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
       - run: npm ci
       - run: |
-          touch src/config.json
-          echo '{"BOT_TOKEN": "${{ secrets.BOT_TOKEN }}","BOT_CLIENT_ID": "${{ secrets.BOT_CLIENT_ID }}","VOICEVOX_ENDPOINT": "${{ secrets.VOICEVOX_ENDPOINT }}","CNNAPI_ENDPOINT": "${{ secrets.CNNAPI_ENDPOINT }}"}' >> src/config.json
-      - run: |
           touch .env
-          echo ${{ secrets.DATABASE }} >> .env
+          echo ${{ secrets.DATABASE }} > .env
+          echo 'BOT_TOKEN="${{ secrets.BOT_TOKEN }}"' >> .env
+          echo 'BOT_CLIENT_ID="${{ secrets.BOT_CLIENT_ID }}"' >> .env
+          echo 'VOICEVOX_ENDPOINT="${{ secrets.VOICEVOX_ENDPOINT }}"' >> .env
+          echo 'CNNAPI_ENDPOINT="${{ secrets.CNNAPI_ENDPOINT }}"' >> .env
+          echo 'TWITCH_CLIENT_ID="${{ secrets.TWITCH_CLIENT_ID }}"' >> .env
+          echo 'TWITCH_CLIENT_SECRET="${{ secrets.TWITCH_CLIENT_SECRET }}"' >> .env
       - name: Deploy Application Command
         run: npm run deploy-command
       - run: npx prisma migrate deploy

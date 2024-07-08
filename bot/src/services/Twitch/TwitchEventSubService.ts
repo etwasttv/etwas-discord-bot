@@ -1,7 +1,6 @@
 import { asyncLock } from '@/core/async-lock';
 import { DiscordClient } from '@/core/discord';
-import { ITwitchEventSubSubscriptionRepository } from '@/repositories/TwitchEventSubSubscription';
-import { ITwitchNotificationChannelRepository } from '@/repositories/TwitchNotificationChannelRepository';
+import { ITwitchEventSubRepository } from '@/repositories/TwitchEventSubRepository';
 import { TwitchApiClient } from '@/services/Twitch/TwitchApiClient';
 import { inject, singleton } from 'tsyringe';
 import { type connection, client as WebSocket } from 'websocket';
@@ -18,8 +17,7 @@ export class TwitchEventSubService implements ITwitchEventSubService {
   constructor(
     @inject('DiscordClient') private discordClient: DiscordClient,
     @inject('TwitchApiClient') private api: TwitchApiClient,
-    @inject('ITwitchEventSubSubscriptionRepository') private twitchEventSubSubscriptionRepository: ITwitchEventSubSubscriptionRepository,
-    @inject('ITwitchNotificationChannelRepository') private twitchNotificationChannelRepository: ITwitchNotificationChannelRepository,
+    @inject('ITwitchEventSubRepository') private twitchEventSubRepository: ITwitchEventSubRepository,
   ) {
     this.init();
   }
@@ -28,6 +26,11 @@ export class TwitchEventSubService implements ITwitchEventSubService {
     await this.deleteAllConduits();
     await this.deleteDisabledEventSubSubscriptions();
     await this.getEventSubWebSocket();
+
+    const subscriptions = await this.twitchEventSubRepository.getBroadcasterIds();
+    for (const broadcasterUserId of subscriptions) {
+      await this.subscribe(broadcasterUserId);
+    }
   }
 
   private async deleteAllConduits() {
@@ -62,39 +65,42 @@ export class TwitchEventSubService implements ITwitchEventSubService {
       const socket = new WebSocket();
       socket.on('connect', connection => {
         connection.on('message', async message => {
-          if (message.type === 'utf8') {
-            console.log('[TwitchEventSubService] Received Message.', message.utf8Data);
-            const msg = parseMessage(message.utf8Data);
-            console.log(msg);
-            if (msg.metadata.message_type === 'session_welcome') {
-              if (oldConnection) oldConnection.close();
-              const welcomeMsg = msg as WelcomeMessage;
-              const conduit = await this.getConduit();
-              await this.api.updateConduitShareds({
-                conduit_id: conduit.id,
-                shards: [{
-                  id: '0',
-                  transport: {
-                    method: 'websocket',
-                    session_id: welcomeMsg.payload.session.id,
-                  }
-                }]
-              });
-              resolve(socket);
-            }
-            else if (msg.metadata.message_type === 'session_keepalive') {
-              await this.deleteDisabledEventSubSubscriptions();
-            }
-            else if (msg.metadata.message_type === 'notification') {
+          try {
+            if (message.type === 'utf8') {
+              console.log('[TwitchEventSubService] Received Message.', message.utf8Data);
+              const msg = parseMessage(message.utf8Data);
+              if (msg.metadata.message_type === 'session_welcome') {
+                if (oldConnection) oldConnection.close();
+                const welcomeMsg = msg as WelcomeMessage;
+                const conduit = await this.getConduit();
+                await this.api.updateConduitShareds({
+                  conduit_id: conduit.id,
+                  shards: [{
+                    id: '0',
+                    transport: {
+                      method: 'websocket',
+                      session_id: welcomeMsg.payload.session.id,
+                    }
+                  }]
+                });
+                resolve(socket);
+              }
+              else if (msg.metadata.message_type === 'session_keepalive') {
+                await this.deleteDisabledEventSubSubscriptions();
+              }
+              else if (msg.metadata.message_type === 'notification') {
+                await this.handleNotification(msg as NotificationMessage);
+              }
+              else if (msg.metadata.message_type === 'revocation') {
 
+              }
+              else if (msg.metadata.message_type === 'session_reconnect') {
+                const reconnectMsg = msg as ReconnectMessage;
+                await this.createEventSubWebSocket(reconnectMsg.payload.session.reconnect_url, connection);
+              }
             }
-            else if (msg.metadata.message_type === 'revocation') {
-
-            }
-            else if (msg.metadata.message_type === 'session_reconnect') {
-              const reconnectMsg = msg as ReconnectMessage;
-              await this.createEventSubWebSocket(reconnectMsg.payload.session.reconnect_url, connection);
-            }
+          } catch (e) {
+            console.error(e);
           }
         });
 
@@ -114,26 +120,56 @@ export class TwitchEventSubService implements ITwitchEventSubService {
   }
 
   async subscribe(broadcasterUserId: string): Promise<void> {
-    const [websocket, conduit] = await Promise.all([
-      this.getEventSubWebSocket(),
-      this.getConduit(),
-    ]);
-    const response = await this.api.createEventSubSubscription({
-      type: 'stream.online',
-      version: '1',
-      condition: {
-        broadcaster_user_id: broadcasterUserId,
-      },
-      transport: {
-        method: 'conduit',
-        conduit_id: conduit.id,
-      }
-    });
-    console.log('[TwitchEventSubService] Create subscription.', response.data[0]);
+    try {
+      const [_websocket, conduit] = await Promise.all([
+        this.getEventSubWebSocket(),
+        this.getConduit(),
+      ]);
+      const response = await this.api.createEventSubSubscription({
+        type: 'stream.online',
+        version: '1',
+        condition: {
+          broadcaster_user_id: broadcasterUserId,
+        },
+        transport: {
+          method: 'conduit',
+          conduit_id: conduit.id,
+        }
+      });
+      console.log('[TwitchEventSubService] Create subscription.', response.data[0]);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  unsubscribe(broadcasterUserId: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async unsubscribe(broadcasterUserId: string): Promise<void> {
+    try {
+      const subs = await this.api.getEventSubSubscription();
+      const sub = subs.data.find(d => d.condition['broadcaster_user_id'] === broadcasterUserId);
+      if (sub) {
+        await this.api.deleteEventSubSubscription(sub.id);
+        console.log('[TwitchEventSubService] Delete subscription.', sub);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  private async handleNotification(msg: NotificationMessage) {
+    const notificationMsg = msg as NotificationMessage;
+    if (notificationMsg.payload.subscription.type === 'stream.online') {
+      const broadcasterUserId = notificationMsg.payload.event['broadcaster_user_id'];
+      const channels = await this.twitchEventSubRepository.findByBroadcasterUserId(broadcasterUserId);
+      console.log(`[TwitchEventSubService] Notifing to ${channels.length} channels.`);
+      if (channels.length === 0) {
+        await this.unsubscribe(broadcasterUserId);
+        return;
+      }
+      await this.discordClient.announce(
+        `**Twitch配信開始通知**\n[${notificationMsg.payload.event['broadcaster_user_name']}](https://www.twitch.tv/${notificationMsg.payload.event['broadcaster_user_login']}) さんが配信を開始しました\n`,
+        channels.map(c => ({ guildId: c.guildId, channelId: c.channelId })),
+      );
+    }
   }
 }
 
@@ -197,14 +233,14 @@ type NotificationMessage = {
       type: string;
       version: string;
       cost: number;
-      condition: Object;
+      condition: any;
       transport: {
         method: 'websocket';
         session_id: string;
       }
       created_at: string;
     }
-    event: Object;
+    event: any;
   }
 }
 type RevocationMessage = {
