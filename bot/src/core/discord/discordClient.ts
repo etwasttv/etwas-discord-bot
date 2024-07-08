@@ -1,7 +1,7 @@
 import { BotCommand } from '@/types/command';
 import { ButtonHandler, StringSelectMenuHandler } from '@/types/component';
 import { BotEvent } from '@/types/event';
-import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
+import { BaseGuildTextChannel, Client, Collection, Events, GatewayIntentBits, MessageCreateOptions, MessagePayload } from 'discord.js';
 import { existsSync } from 'fs';
 import { readdir } from 'fs/promises';
 import path from 'path';
@@ -11,6 +11,7 @@ import { singleton } from 'tsyringe';
 @singleton()
 class DiscordClient {
   private client: Client;
+  private token?: string;
 
   constructor() {
     this.client = new Client({ intents: [
@@ -23,15 +24,37 @@ class DiscordClient {
     ]});
   }
 
-  async init(): Promise<void> {
+  async init(token: string): Promise<void> {
+    this.token = token;
     await this.addEventListener();
     await this.loadButtonComponents();
     await this.loadStringSelectMenuComponents();
     await this.loadCommands();
+    await this.client.login(token);
   }
 
   async login(token: string): Promise<string> {
     return await this.client.login(token);
+  }
+
+  async announce(content: string | MessagePayload | MessageCreateOptions, targets: { guildId: string, channelId: string }[]) {
+    console.log('is token set', !!this.token);
+    let successCount = 0;
+    console.log(targets);
+    for (const target of targets) {
+      try {
+        const guild = await this.client.guilds.fetch(target.guildId);
+        const ch = await guild.channels.fetch(target.channelId);
+        if (ch instanceof BaseGuildTextChannel) {
+          await ch.send(content);
+        }
+        successCount++;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    console.log(`[DiscordClient] Announced something to ${successCount} channels.`);
+    return successCount;
   }
 
   private async addEventListener(): Promise<number> {

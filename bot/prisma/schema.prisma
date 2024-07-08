@@ -30,3 +30,11 @@ model Omikuji {
   omikuji   String
   updatedAt DateTime @updatedAt
 }
+
+model TwitchEventSub {
+  guildId           String
+  channelId         String
+  broadcasterUserId String
+
+  @@id([guildId, channelId, broadcasterUserId])
+}
