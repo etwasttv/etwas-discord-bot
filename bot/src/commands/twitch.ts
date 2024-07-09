@@ -80,7 +80,7 @@ const command: BotCommand = {
       if (infos.length === 0) {
         await interaction.reply(`${interaction.channel} では配信開始通知が設定していません。`)
       }
-      const msg = infos.map(i => i.login).join('\n');
+      const msg = infos.map(i => i.login.replace('_', '\_')).join('\n');
       await interaction.reply({
         content: `${interaction.channel} では以下のチャンネルの配信開始通知が設定されています。\n${msg}`,
       });

@@ -166,7 +166,7 @@ export class TwitchEventSubService implements ITwitchEventSubService {
         return;
       }
       await this.discordClient.announce(
-        `**Twitch配信開始通知**\n[${notificationMsg.payload.event['broadcaster_user_name']}](https://www.twitch.tv/${notificationMsg.payload.event['broadcaster_user_login']}) さんが配信を開始しました\n`,
+        `**Twitch配信開始通知**\n[${notificationMsg.payload.event['broadcaster_user_name']}](https://www.twitch.tv/${notificationMsg.payload.event['broadcaster_user_login']}) さんが配信を開始しました\n`.replace('_', '\_'),
         channels.map(c => ({ guildId: c.guildId, channelId: c.channelId })),
       );
     }
