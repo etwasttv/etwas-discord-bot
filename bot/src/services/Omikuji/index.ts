@@ -39,10 +39,13 @@ class OmikujiService implements IOmikujiService {
 
   async omikuji(user: User) {
     const today = new Date();
-    today.setHours(0);
-    today.setMinutes(0);
-    today.setSeconds(0);
-    today.setMilliseconds(0);
+    console.log(today.getTimezoneOffset());
+    today.setUTCHours(today.getUTCHours()+9);
+    today.setUTCHours(0);
+    today.setUTCMinutes(0);
+    today.setUTCSeconds(0);
+    today.setUTCMilliseconds(0);
+    today.setUTCHours(today.getUTCHours()-9);
 
     const dailyOmikuji = await this._repository.find(user.id);
     if (dailyOmikuji && dailyOmikuji.updatedAt.getTime() - today.getTime() >= 0)
