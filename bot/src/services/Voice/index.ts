@@ -1,49 +1,55 @@
-import { prisma } from '@/core/prisma';
-import { generateQuery, generateVoice } from '@/core/voice';
-import { AudioPlayer, VoiceConnectionReadyState, VoiceConnectionStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
 import { Guild, User, VoiceChannel } from 'discord.js';
+import { inject, injectable } from 'tsyringe';
+
+import { generateQuery, generateVoice } from '@/core/voice';
+import { VoiceConfig } from '@/entities';
+import { type IVoiceConfigRepository } from '@/repositories/voiceConfigRepository';
+import { AudioPlayer, VoiceConnectionReadyState, VoiceConnectionStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
 import { Readable } from 'stream';
 
-class VoiceService {
+interface IVoiceService {
+  setSpeaker(guild: Guild, user: User, speakerId: number): Promise<void>;
+  getSpeakerId(guild: Guild, user: User): Promise<number>;
+  read(voiceChannel: VoiceChannel, user: User, text: string): Promise<void>;
+  connect(voiceChannel: VoiceChannel): boolean;
+  isConnectTo(voiceChannel: VoiceChannel): boolean;
+  disconnect(voiceChannel: VoiceChannel): void;
+}
+
+@injectable()
+class VoiceService implements IVoiceService {
+
+  constructor(@inject('IVoiceConfigRepository') private _repository: IVoiceConfigRepository) { }
 
   private URL = new RegExp('https?://[\\w!?/+\\-_~;.,*&@#=$%()\'[\\]]+', 'g');
   private CODEBLOCK = new RegExp(/```.*```/gsm);
+  private CODELINE = new RegExp(/`.*`/gsm);
   private convert(text: string) {
     let fixedText = text.replaceAll(this.URL, 'URL省略');
-    fixedText = fixedText.replaceAll(this.CODEBLOCK, 'コード省略');
+    fixedText = fixedText.replaceAll(this.CODEBLOCK, 'コードブロック省略');
+    fixedText = fixedText.replaceAll(this.CODELINE, 'コード省略');
     return fixedText;
   }
 
   async setSpeaker(guild: Guild, user: User, spakerId: number) {
-    await prisma.voice.upsert({
-      where: {
-        guildId_userId: {
-          guildId: guild.id,
-          userId: user.id,
-        },
-      },
-      update: {
-        speakerId: spakerId,
-      },
-      create: {
-        guildId: guild.id,
-        userId: user.id,
-        speakerId: spakerId,
-      }
-    });
+    const exist = await this._repository.find(guild.id, user.id);
+
+    const config = new VoiceConfig(
+      guild.id,
+      user.id,
+      spakerId,
+    );
+
+    if (!exist)
+      await this._repository.create(config);
+    else
+      await this._repository.update(config);
   }
 
   async getSpeakerId(guild: Guild, user: User) {
-    const voice = await prisma.voice.findUnique({
-      where: {
-        guildId_userId: {
-          guildId: guild.id,
-          userId: user.id,
-        }
-      }
-    });
+    const config = await this._repository.find(guild.id, user.id);
 
-    return voice?.speakerId ?? 3;
+    return config?.speakerId ?? 3;
   }
 
   async read(voiceChannel: VoiceChannel, user: User, text: string) {
@@ -103,4 +109,4 @@ class VoiceService {
   }
 }
 
-export { VoiceService }
+export { VoiceService, type IVoiceService }

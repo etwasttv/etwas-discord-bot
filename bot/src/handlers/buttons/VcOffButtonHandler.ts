@@ -1,12 +1,14 @@
+import { ActionRowBuilder, ButtonBuilder, TextChannel } from 'discord.js';
+import { container } from 'tsyringe';
+
 import { VcOffButton } from '@/components/buttons/VcOffButton';
 import { VcOnButton } from '@/components/buttons/VcOnButton';
-import { RoomService } from '@/services/Room';
-import { VoiceService } from '@/services/Voice';
 import { ButtonHandler } from '@/types/component';
-import { ActionRowBuilder, ButtonBuilder, TextChannel } from 'discord.js';
+import { type IRoomService } from '@/services/Room';
+import { type IVoiceService } from '@/services/Voice';
 
-const voiceService = new VoiceService();
-const roomService = new RoomService();
+const voiceService = container.resolve<IVoiceService>('IVoiceService');
+const roomService = container.resolve<IRoomService>('IRoomService');
 
 const handler: ButtonHandler = {
   customId: VcOffButton.customId,

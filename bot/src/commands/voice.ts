@@ -1,9 +1,11 @@
-import { VoiceSelectMenu } from '@/components/stringSelectMenus/VoiceSelectMenu';
-import { VoiceService } from '@/services/Voice';
-import { BotCommand } from '@/types/command';
 import { ActionRowBuilder, SlashCommandBuilder, StringSelectMenuBuilder } from 'discord.js';
+import { container } from 'tsyringe';
 
-const voiceService = new VoiceService();
+import { VoiceSelectMenu } from '@/components/stringSelectMenus/VoiceSelectMenu';
+import { BotCommand } from '@/types/command';
+import { type IVoiceService } from '@/services/Voice';
+
+const voiceService = container.resolve<IVoiceService>('IVoiceService');
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()

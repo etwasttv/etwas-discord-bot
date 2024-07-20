@@ -1,8 +1,10 @@
-import { RoomService } from '@/services/Room';
-import { BotEvent } from '@/types/event';
 import { Client, Events, VoiceChannel } from 'discord.js';
+import { container } from 'tsyringe';
 
-const roomService = new RoomService();
+import { type IRoomService } from '@/services/Room';
+import { BotEvent } from '@/types/event';
+
+const roomService = container.resolve<IRoomService>('IRoomService');
 
 const event: BotEvent = {
   eventName: Events.ClientReady,

@@ -1,4 +1,6 @@
-import { BOT_TOKEN, BOT_CLIENT_ID } from "@/config.json";
+import "reflect-metadata";
+
+import 'dotenv/config';
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -7,11 +9,17 @@ import {
 
 import fs from 'fs/promises';
 import { BotCommand } from '@/types/command';
+import { container } from 'tsyringe';
+
+
+container.register('IVoiceService', { useValue: {} });
+container.register('IOmikujiService', { useValue: {} });
+container.register('IRoomService', { useValue: {} });
 
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
-  const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
+  const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN!);
   try {
     const files = await fs.readdir(`${__dirname}/../commands`);
 
@@ -20,7 +28,7 @@ import { BotCommand } from '@/types/command';
       commands.push(command.builder.toJSON());
     }));
 
-    await rest.put(Routes.applicationCommands(BOT_CLIENT_ID), { body: commands });
+    await rest.put(Routes.applicationCommands(process.env.BOT_CLIENT_ID!), { body: commands });
     console.log(`Registered ${commands.length} application commands.`);
   } catch (e) {
     console.error(e);
