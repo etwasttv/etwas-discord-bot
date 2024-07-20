@@ -10,11 +10,13 @@ import {
 import fs from 'fs/promises';
 import { BotCommand } from '@/types/command';
 import { container } from 'tsyringe';
+import { EmojiService } from '@/services/Emoji';
 
 
 container.register('IVoiceService', { useValue: {} });
 container.register('IOmikujiService', { useValue: {} });
 container.register('IRoomService', { useValue: {} });
+container.register('IEmojiService', { useClass: EmojiService });
 
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
