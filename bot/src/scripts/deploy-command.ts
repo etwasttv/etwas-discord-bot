@@ -12,8 +12,6 @@ import { BotCommand } from '@/types/command';
 import { container } from 'tsyringe';
 
 
-container.register('ITwitchEventSubService', { useValue: {} });
-container.register('ITwitchNotificationChannelService', { useValue: {} });
 container.register('IVoiceService', { useValue: {} });
 container.register('IOmikujiService', { useValue: {} });
 container.register('IRoomService', { useValue: {} });
