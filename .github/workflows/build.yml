@@ -18,7 +18,8 @@ jobs:
       - run: npm ci
       - run: |
           touch .env
-          echo ${{ secrets.DATABASE }} > .env
+          echo 'TZ=UTC' > .env
+          echo ${{ secrets.DATABASE }} >> .env
           echo 'BOT_TOKEN="${{ secrets.BOT_TOKEN }}"' >> .env
           echo 'BOT_CLIENT_ID="${{ secrets.BOT_CLIENT_ID }}"' >> .env
           echo 'VOICEVOX_ENDPOINT="${{ secrets.VOICEVOX_ENDPOINT }}"' >> .env
