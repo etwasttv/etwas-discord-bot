@@ -10,6 +10,7 @@ import { OmikujiService } from '@/services/Omikuji';
 import { OmikujiRepository } from '@/repositories/omikujiRepository';
 import { VoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 import { RoomConfigRepository } from '@/repositories/roomConfigRepository';
+import { EmojiService } from '@/services/Emoji';
 
 container.register('DiscordClient', { useClass: DiscordClient }, { lifecycle: Lifecycle.Singleton });
 
@@ -20,6 +21,7 @@ container.register('IRoomConfigRepository', { useClass: RoomConfigRepository });
 container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
+container.register('IEmojiService', { useClass: EmojiService });
 
 
 const discordClient = container.resolve<DiscordClient>('DiscordClient');
