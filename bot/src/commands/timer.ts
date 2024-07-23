@@ -92,8 +92,9 @@ const command: BotCommand = {
     else if (command === 'list') {
       const timers = await service.getTimerList(interaction.guild, interaction.user);
       const timerLists = timers.map((timer) => {
-        const startedAt = timer.scheduledAt;
+        const startedAt = new Date(timer.scheduledAt);
         startedAt.setUTCSeconds(startedAt.getUTCSeconds() - timer.timerSeconds);
+        startedAt.setHours(startedAt.getHours() + 9);
         let msg = '```\n';
         msg += `タイマー: ${convertSecondsToTimeString(timer.timerSeconds)}\n`
         msg += `開始時刻: ${startedAt.getUTCFullYear()}/${startedAt.getUTCMonth().toString().padStart(2, '0')}/${startedAt.getUTCDate().toString().padStart(2, '0')} ${startedAt.getUTCHours().toString().padStart(2, '0')}:${startedAt.getUTCMinutes().toString().padStart(2, '0')}:${startedAt.getUTCSeconds().toString().padStart(2, '0')}\n`;
