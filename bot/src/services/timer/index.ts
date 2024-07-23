@@ -36,6 +36,8 @@ class TimerService implements ITimerService {
       const timer = await prisma.timer.findUnique({
         where: {
           id: timerId,
+          isCanceled: false,
+          isTriggered: false,
         }
       });
       if (!timer) return false;
