@@ -7,12 +7,9 @@ import { DiscordClient } from '@/core/discord';
 import { VoiceService } from '@/services/Voice';
 import { RoomService } from '@/services/Room';
 import { OmikujiService } from '@/services/Omikuji';
-import { VoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 import { EmojiService } from '@/services/Emoji';
 
 container.register('DiscordClient', { useClass: DiscordClient }, { lifecycle: Lifecycle.Singleton });
-
-container.register('IVoiceConfigRepository', { useClass: VoiceConfigRepository });
 
 container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });
