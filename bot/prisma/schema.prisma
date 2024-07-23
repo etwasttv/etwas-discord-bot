@@ -34,12 +34,12 @@ model Omikuji {
 model Timer {
   id           String @id @default(uuid())
   userId       String
-  mentionId    String
-  guildId      String
-  channelId    String
-  timerSeconds String
+  mention      String?
+  guildId      String?
+  channelId    String?
+  timerSeconds Int
   message      String?
-  ephemeral    Boolean @default(true)
+  ephemeral    Boolean @default(false)
   isTriggered  Boolean @default(false)
   isCanceled   Boolean @default(false)
   scheduledAt  DateTime

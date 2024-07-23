@@ -15,6 +15,7 @@ container.register('IVoiceService', { useValue: {} });
 container.register('IOmikujiService', { useValue: {} });
 container.register('IRoomService', { useValue: {} });
 container.register('IEmojiService', { useValue: {} });
+container.register('ITimerService', { useValue: {} });
 
 (async () => {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
