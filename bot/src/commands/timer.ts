@@ -97,7 +97,7 @@ const command: BotCommand = {
         startedAt.setHours(startedAt.getHours() + 9);
         let msg = '```\n';
         msg += `タイマー: ${convertSecondsToTimeString(timer.timerSeconds)}\n`
-        msg += `開始時刻: ${startedAt.getUTCFullYear()}/${startedAt.getUTCMonth().toString().padStart(2, '0')}/${startedAt.getUTCDate().toString().padStart(2, '0')} ${startedAt.getUTCHours().toString().padStart(2, '0')}:${startedAt.getUTCMinutes().toString().padStart(2, '0')}:${startedAt.getUTCSeconds().toString().padStart(2, '0')}\n`;
+        msg += `開始時刻: ${startedAt.getUTCFullYear()}/${(startedAt.getUTCMonth()+1).toString().padStart(2, '0')}/${startedAt.getUTCDate().toString().padStart(2, '0')} ${startedAt.getUTCHours().toString().padStart(2, '0')}:${startedAt.getUTCMinutes().toString().padStart(2, '0')}:${startedAt.getUTCSeconds().toString().padStart(2, '0')}\n`;
         msg += `Timer Id: ${timer.timerId}\n`;
         msg += '```';
         return msg;
