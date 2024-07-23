@@ -33,8 +33,9 @@ async function main() {
   }
 
   //  初期化
-  await discordClient.init(process.env.BOT_TOKEN);
+  await discordClient.init();
 
+  await discordClient.login(process.env.BOT_TOKEN);
   console.log('Starting Bot');
 }
 
