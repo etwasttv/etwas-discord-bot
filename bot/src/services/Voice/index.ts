@@ -1,11 +1,10 @@
 import { Guild, User, VoiceChannel } from 'discord.js';
-import { inject, injectable } from 'tsyringe';
+import { injectable } from 'tsyringe';
 
 import { generateQuery, generateVoice } from '@/core/voice';
-import { VoiceConfig } from '@/entities';
-import { type IVoiceConfigRepository } from '@/repositories/voiceConfigRepository';
 import { AudioPlayer, VoiceConnectionReadyState, VoiceConnectionStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
 import { Readable } from 'stream';
+import { prisma } from '@/core/prisma';
 
 interface IVoiceService {
   setSpeaker(guild: Guild, user: User, speakerId: number): Promise<void>;
@@ -18,9 +17,6 @@ interface IVoiceService {
 
 @injectable()
 class VoiceService implements IVoiceService {
-
-  constructor(@inject('IVoiceConfigRepository') private _repository: IVoiceConfigRepository) { }
-
   private URL = new RegExp('https?://[\\w!?/+\\-_~;.,*&@#=$%()\'[\\]]+', 'g');
   private CODEBLOCK = new RegExp(/```.*```/gsm);
   private CODELINE = new RegExp(/`.*`/gsm);
@@ -32,22 +28,46 @@ class VoiceService implements IVoiceService {
   }
 
   async setSpeaker(guild: Guild, user: User, spakerId: number) {
-    const exist = await this._repository.find(guild.id, user.id);
-
-    const config = new VoiceConfig(
-      guild.id,
-      user.id,
-      spakerId,
-    );
+    const exist = await prisma.voice.findUnique({
+      where: {
+        guildId_userId: {
+          guildId: guild.id,
+          userId: user.id,
+        }
+      }
+    });
 
     if (!exist)
-      await this._repository.create(config);
+      await prisma.voice.create({
+        data: {
+          guildId: guild.id,
+          userId: user.id,
+          speakerId: spakerId,
+        }
+      });
     else
-      await this._repository.update(config);
+      await prisma.voice.update({
+        where: {
+          guildId_userId: {
+            guildId: guild.id,
+            userId: user.id,
+          },
+        },
+        data: {
+          speakerId: spakerId,
+        }
+      });
   }
 
   async getSpeakerId(guild: Guild, user: User) {
-    const config = await this._repository.find(guild.id, user.id);
+    const config = await prisma.voice.findUnique({
+      where: {
+        guildId_userId: {
+          guildId: guild.id,
+          userId: user.id,
+        }
+      }
+    });
 
     return config?.speakerId ?? 3;
   }

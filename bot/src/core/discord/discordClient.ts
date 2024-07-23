@@ -1,7 +1,7 @@
 import { BotCommand } from '@/types/command';
 import { ButtonHandler, StringSelectMenuHandler } from '@/types/component';
 import { BotEvent } from '@/types/event';
-import { BaseGuildTextChannel, Client, Collection, Events, GatewayIntentBits, MessageCreateOptions, MessagePayload } from 'discord.js';
+import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { existsSync } from 'fs';
 import { readdir } from 'fs/promises';
 import path from 'path';
@@ -9,52 +9,25 @@ import { singleton } from 'tsyringe';
 
 
 @singleton()
-class DiscordClient {
-  private client: Client;
-  private token?: string;
-
+class DiscordClient extends Client {
   constructor() {
-    this.client = new Client({ intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMembers,
-      GatewayIntentBits.GuildVoiceStates,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.GuildPresences,
-      GatewayIntentBits.MessageContent,
-    ]});
+    super({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.MessageContent,
+      ]
+    });
   }
 
-  async init(token: string): Promise<void> {
-    this.token = token;
+  async init(): Promise<void> {
     await this.addEventListener();
     await this.loadButtonComponents();
     await this.loadStringSelectMenuComponents();
     await this.loadCommands();
-    await this.client.login(token);
-  }
-
-  async login(token: string): Promise<string> {
-    return await this.client.login(token);
-  }
-
-  async announce(content: string | MessagePayload | MessageCreateOptions, targets: { guildId: string, channelId: string }[]) {
-    console.log('is token set', !!this.token);
-    let successCount = 0;
-    console.log(targets);
-    for (const target of targets) {
-      try {
-        const guild = await this.client.guilds.fetch(target.guildId);
-        const ch = await guild.channels.fetch(target.channelId);
-        if (ch instanceof BaseGuildTextChannel) {
-          await ch.send(content);
-        }
-        successCount++;
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    console.log(`[DiscordClient] Announced something to ${successCount} channels.`);
-    return successCount;
   }
 
   private async addEventListener(): Promise<number> {
@@ -72,11 +45,9 @@ class DiscordClient {
         const event: BotEvent = (await import(`./${directoryPath}/${file}`)).default;
         if (!event) return;
         if (event.once)
-          this.client.once(
-            event.eventName as string, event.listener);
+          this.once(event.eventName as string, event.listener);
         else
-          this.client.on(
-            event.eventName as string, event.listener);
+          this.on(event.eventName as string, event.listener);
       } catch (e) {
         console.error(e);
       }
@@ -103,7 +74,7 @@ class DiscordClient {
       }
     }));
 
-    this.client.on(Events.InteractionCreate, async interaction => {
+    this.on(Events.InteractionCreate, async interaction => {
       if (interaction.user.bot) return;
       if (interaction.isButton()) {
         try {
@@ -141,7 +112,7 @@ class DiscordClient {
       }
     }));
 
-    this.client.on(Events.InteractionCreate, async interaction => {
+    this.on(Events.InteractionCreate, async interaction => {
       if (interaction.user.bot) return;
       if (interaction.isStringSelectMenu()) {
         try {
@@ -179,7 +150,7 @@ class DiscordClient {
       }
     }));
 
-    this.client.on(Events.InteractionCreate, async interaction => {
+    this.on(Events.InteractionCreate, async interaction => {
       if (interaction.user.bot) return;
 
       if (interaction.isCommand()) {
