@@ -1,7 +1,6 @@
-import { Omikuji } from '@/entities';
-import { type IOmikujiRepository } from '@/repositories/omikujiRepository';
+import { prisma } from '@/core/prisma';
 import { User } from 'discord.js';
-import { inject, injectable } from 'tsyringe';
+import { injectable } from 'tsyringe';
 
 
 const OMIKUJI: { name: string, ratio: number }[] = [
@@ -34,9 +33,6 @@ interface IOmikujiService {
 
 @injectable()
 class OmikujiService implements IOmikujiService {
-
-  constructor(@inject('IOmikujiRepository') private _repository: IOmikujiRepository) { }
-
   async omikuji(user: User) {
     const today = new Date();
     console.log(today.getTimezoneOffset());
@@ -47,22 +43,32 @@ class OmikujiService implements IOmikujiService {
     today.setUTCMilliseconds(0);
     today.setUTCHours(today.getUTCHours()-9);
 
-    const dailyOmikuji = await this._repository.find(user.id);
+    const dailyOmikuji = await prisma.omikuji.findUnique({ where: { userId: user.id } });
     if (dailyOmikuji && dailyOmikuji.updatedAt.getTime() - today.getTime() >= 0)
       return dailyOmikuji.omikuji;
 
     const num = Math.floor(Math.random() * omikujiSum);
     const omikujiValue = omikujiIndex.find(o => o.from <= num && num < o.to);
-    if (!omikujiValue)
-      return '';
+    if (!omikujiValue) throw new Error('No Omikuji Value');
 
-    const omikuji = new Omikuji(user.id, omikujiValue.name, new Date());
     if (dailyOmikuji)
-      await this._repository.update(omikuji);
+      await prisma.omikuji.update({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          omikuji: omikujiValue.name,
+        },
+      });
     else
-      await this._repository.create(omikuji);
+      await prisma.omikuji.create({
+        data: {
+          userId: user.id,
+          omikuji: omikujiValue.name,
+        }
+      });
 
-    return omikuji.omikuji;
+    return omikujiValue.name;
   }
 }
 

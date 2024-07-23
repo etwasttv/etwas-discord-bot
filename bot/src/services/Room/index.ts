@@ -5,9 +5,8 @@ import { inject, injectable } from 'tsyringe';
 import { VcOffButton } from '@/components/buttons/VcOffButton';
 import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
-import { RoomConfig } from '@/entities';
 import { type IVoiceService } from '@/services/Voice';
-import { type IRoomConfigRepository } from '@/repositories/roomConfigRepository';
+import { prisma } from '@/core/prisma';
 
 
 interface IRoomService {
@@ -22,7 +21,6 @@ interface IRoomService {
 class RoomService implements IRoomService {
   constructor(
     @inject('IVoiceService') private voiceService: IVoiceService,
-    @inject('IRoomConfigRepository') private repository: IRoomConfigRepository,
   ) { }
 
   async syncRoom(voiceChannel: VoiceChannel) {
@@ -35,7 +33,11 @@ class RoomService implements IRoomService {
     const isVoiceChannelUsed = this.isVoiceChannelUsed(voiceChannel);
 
     await asyncLock.acquire(voiceChannel.id, async () => {
-      const room = await this.repository.findByVoiceChannelId(voiceChannel.id);
+      const room = await prisma.room.findUnique({
+        where: {
+          voiceChannelId: voiceChannel.id,
+        }
+      });
 
       if (!room || !room.textChannelId) {
         if (!isVoiceChannelUsed) {
@@ -95,43 +97,52 @@ class RoomService implements IRoomService {
       }
 
       if (!room)
-        await this.repository.create(new RoomConfig(
-          undefined,
-          voiceChannel.guildId,
-          voiceChannel.id,
-          isVoiceChannelUsed ? textChannel.id : null,
-          false,
-      ));
+        await prisma.room.create({
+          data: {
+            guildId: voiceChannel.guildId,
+            voiceChannelId: voiceChannel.id,
+            textChannelId: isVoiceChannelUsed ? textChannel.id : null,
+            voice: false,
+          }
+        });
       else
-        await this.repository.update(new RoomConfig(
-          room.roomId,
-          room.guildId,
-          room.voiceChannelId,
-          isVoiceChannelUsed ? textChannel.id : null,
-          room.voice,
-      ));
+        await prisma.room.update({
+          where: {
+            roomId: room.roomId,
+          },
+          data: {
+            textChannelId: isVoiceChannelUsed ? textChannel.id : null,
+          }
+        });
     });
   }
 
   async setVoice(voiceChannel: VoiceChannel, voice: boolean) {
-    const room = await this.repository.findByVoiceChannelId(voiceChannel.id);
+    const room = await prisma.room.findUnique({
+      where: {
+        voiceChannelId: voiceChannel.id,
+      }
+    });
 
     if (!room)
-      await this.repository.create(new RoomConfig(
-        undefined,
-        voiceChannel.guildId,
-        voiceChannel.id,
-        null,
-        voice,
-    ));
+      await prisma.room.create({
+        data: {
+          roomId: undefined,
+          guildId: voiceChannel.guildId,
+          voiceChannelId: voiceChannel.id,
+          textChannelId: null,
+          voice: voice,
+        }
+      });
     else
-      await this.repository.update(new RoomConfig(
-        room.roomId,
-        room.guildId,
-        room.voiceChannelId,
-        room.textChannelId,
-        voice,
-    ));
+      await prisma.room.update({
+        where: {
+          roomId: room.roomId,
+        },
+        data: {
+          voice: voice,
+        }
+      });
   }
 
   private isVoiceChannelUsed(voiceChannel: VoiceChannel) {
@@ -160,7 +171,11 @@ class RoomService implements IRoomService {
   }
 
   async getTextChannel(voiceChannel: VoiceChannel) {
-    const room = await this.repository.findByVoiceChannelId(voiceChannel.id);
+    const room = await prisma.room.findUnique({
+      where: {
+        voiceChannelId: voiceChannel.id,
+      }
+    });
 
     if (!room || !room.textChannelId)
       return undefined;
@@ -173,7 +188,11 @@ class RoomService implements IRoomService {
   }
 
   async getVoiceChannel(textChannel: TextChannel) {
-    const room = await this.repository.findByTextChannelId(textChannel.id);
+    const room = await prisma.room.findUnique({
+      where: {
+        textChannelId: textChannel.id,
+      }
+    })
 
     if (!room)
       return undefined;
