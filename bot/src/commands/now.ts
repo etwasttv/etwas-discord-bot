@@ -5,7 +5,7 @@ const DayOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()
-    .setName('time')
+    .setName('now')
     .setDescription('現在時刻を返します(JST)'),
   handler: async interaction => {
     if (interaction.user.bot) return;

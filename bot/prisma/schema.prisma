@@ -30,3 +30,17 @@ model Omikuji {
   omikuji   String
   updatedAt DateTime @updatedAt
 }
+
+model Timer {
+  id           String @id @default(uuid())
+  userId       String
+  mention      String?
+  guildId      String?
+  channelId    String?
+  timerSeconds Int
+  message      String?
+  ephemeral    Boolean @default(false)
+  isTriggered  Boolean @default(false)
+  isCanceled   Boolean @default(false)
+  scheduledAt  DateTime
+}
