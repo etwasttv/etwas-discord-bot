@@ -1,6 +1,6 @@
 import { convertSecondsToTimeString, ITimerService } from '@/services/timer';
 import { BotCommand } from '@/types/command';
-import { CommandInteractionOptionResolver, SlashCommandBuilder } from 'discord.js';
+import { CommandInteractionOptionResolver, Message, SlashCommandBuilder } from 'discord.js';
 import { container } from 'tsyringe';
 
 const service = container.resolve<ITimerService>('ITimerService');
@@ -37,11 +37,19 @@ const command: BotCommand = {
         .addStringOption(opt =>
           opt.setName('message')
             .setDescription('通知メッセージの内容')
-            .setRequired(false))),
+            .setRequired(false)))
+    .addSubcommand(cmd =>
+      cmd.setName('cancel')
+        .setDescription('タイマーを解除する')
+        .addStringOption(opt =>
+          opt.setName('timer_id')
+            .setDescription('解除したいタイマーの Timer Id')
+            .setRequired(true)))
+    .addSubcommand(cmd =>
+      cmd.setName('list')
+        .setDescription('設定しているタイマー一覧を表示する')),
   handler: async interaction => {
     if (interaction.user.bot) return;
-    console.log(interaction.channel);
-
     const options = interaction.options as CommandInteractionOptionResolver;
     const command = options.getSubcommand(true);
 
@@ -66,6 +74,51 @@ const command: BotCommand = {
       await interaction.reply({
         content: msg,
       });
+    }
+    else if (command === 'cancel') {
+      const timerId = options.getString('timer_id');
+      if (!timerId) {
+        await interaction.reply({
+          content: 'Timer Id を指定してください',
+        });
+        return;
+      }
+      const result = await service.cancelTimer(interaction.guild, interaction.channel, interaction.user, timerId);
+      if (result)
+        await interaction.reply(`タイマーを解除しました\n\`Timer Id: ${timerId}\``);
+      else
+        await interaction.reply('タイマーを解除できませんでした');
+    }
+    else if (command === 'list') {
+      const timers = await service.getTimerList(interaction.guild, interaction.user);
+      const timerLists = timers.map((timer) => {
+        const startedAt = timer.scheduledAt;
+        startedAt.setUTCSeconds(startedAt.getUTCSeconds() - timer.timerSeconds);
+        let msg = '```\n';
+        msg += `タイマー: ${convertSecondsToTimeString(timer.timerSeconds)}\n`
+        msg += `開始時刻: ${startedAt.getUTCFullYear()}/${startedAt.getUTCMonth().toString().padStart(2, '0')}/${startedAt.getUTCDate().toString().padStart(2, '0')} ${startedAt.getUTCHours().toString().padStart(2, '0')}:${startedAt.getUTCMinutes().toString().padStart(2, '0')}:${startedAt.getUTCSeconds().toString().padStart(2, '0')}\n`;
+        msg += `Timer Id: ${timer.timerId}\n`;
+        msg += '```';
+        return msg;
+      });
+
+      if (timerLists.length === 0) {
+        await interaction.reply('今、設定してるタイマーは無いよ！');
+        return;
+      }
+
+      const perPage = 10;
+      const pages = Math.ceil(timers.length / perPage);
+      let parent: Message|null = null;
+      for (let page = 0; page < pages; page++) {
+        const lists = timerLists.slice(page*perPage, Math.min(timerLists.length, (page+1)*perPage));
+        const msg = `${page+1}/${pages}` + lists.join('');
+        if (!parent)
+          await interaction.reply(msg);
+        else
+          await parent.reply(msg);
+        parent = await interaction.fetchReply();
+      }
     }
   }
 }

@@ -18,8 +18,8 @@ interface TimerObject {
 interface ITimerService {
   init(): Promise<void>;
   setTimer(guild: Guild|null, textChannel: TextBasedChannel|null, user: User, timerSeconds: number, memtion: string|undefined, message: string|undefined|null): Promise<string>;
-  cancelTimer(guild: Guild, textChannel: TextBasedChannel, user: User, timerId: string): Promise<boolean>;
-  getTimerList(guild: Guild, user: User): Promise<TimerObject[]>;
+  cancelTimer(guild: Guild|null, textChannel: TextBasedChannel|null, user: User, timerId: string): Promise<boolean>;
+  getTimerList(guild: Guild|null, user: User): Promise<TimerObject[]>;
 }
 
 @singleton()
@@ -31,17 +31,18 @@ class TimerService implements ITimerService {
 
   }
 
-  async cancelTimer(guild: Guild, textChannel: TextBasedChannel, user: User, timerId: string): Promise<boolean> {
+  async cancelTimer(guild: Guild|null, textChannel: TextBasedChannel|null, user: User, timerId: string): Promise<boolean> {
     try {
       const timer = await prisma.timer.findUnique({
         where: {
           id: timerId,
         }
       });
-
       if (!timer) return false;
 
-      if (timer.guildId !== guild.id || timer.channelId !== textChannel.id || timer.userId !== user.id) return false;
+      const guildId = guild?.id ?? null;
+
+      if (timer.guildId !== guildId || timer.id !== timerId || timer.userId !== user.id) return false;
 
       await prisma.timer.update({
         where: {
@@ -51,6 +52,8 @@ class TimerService implements ITimerService {
           isCanceled: true,
         }
       });
+      const timeoutId = this.timerObjects.get(timerId)?.timeoutId;
+      if (timeoutId) clearTimeout(timeoutId);
       this.timerObjects.delete(timerId);
     } catch {
       return false;
@@ -58,8 +61,10 @@ class TimerService implements ITimerService {
     return true;
   }
 
-  async getTimerList(guild: Guild, user: User): Promise<TimerObject[]> {
-    throw new Error('Method not implemented.');
+  async getTimerList(guild: Guild|null, user: User): Promise<TimerObject[]> {
+    const timers = Array.from(this.timerObjects.values());
+    const guildId = guild?.id ?? null;
+    return timers.filter(t => t.guildId === guildId && t.userId === user.id);
   }
 
   async init() {
@@ -80,8 +85,8 @@ class TimerService implements ITimerService {
     scheduledAt.setUTCSeconds(scheduledAt.getUTCSeconds() + timerSeconds);
     const timer = await prisma.timer.create({
       data: {
-        guildId: guild?.id,
-        channelId: channel?.id,
+        guildId: guild?.id ?? null,
+        channelId: channel?.id ?? null,
         userId: user.id,
         timerSeconds: timerSeconds,
         scheduledAt: scheduledAt,
