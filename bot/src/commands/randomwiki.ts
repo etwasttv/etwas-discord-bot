@@ -10,10 +10,12 @@ const service = container.resolve<IWikiService>('IWikiService');
 const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('randomwiki')
-    .setDescription('秀逸な記事をランダムで表示する'),
+    .setDescription('Wikipediaの記事をランダムで表示する'),
   handler: async interaction => {
     if (interaction.user.bot)
       return;
+
+    await interaction.deferReply();
 
     const response = await fetch(GoodWiki);
     const splits = response.url.split('/');
@@ -41,10 +43,10 @@ const command: BotCommand = {
 
     if (description)
       embed.setDescription(description);
-
     if (thumbnail)
       embed.setImage(thumbnail);
-    await interaction.reply({
+
+    await interaction.editReply({
       content: `あなたにおすすめの記事はこちら！\n`,
       embeds: [embed],
     });
