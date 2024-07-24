@@ -16,6 +16,8 @@ const command: BotCommand = {
     if (interaction.user.bot)
       return;
 
+    await interaction.deferReply();
+
     const response = await fetch(GoodWiki);
     const splits = response.url.split('/');
 
@@ -42,11 +44,10 @@ const command: BotCommand = {
 
     if (description)
       embed.setDescription(description);
-
     if (thumbnail)
       embed.setImage(thumbnail);
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `あなたにおすすめの良質な記事はこちら！\n`,
       embeds: [embed],
     });

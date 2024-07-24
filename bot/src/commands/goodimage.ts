@@ -12,9 +12,11 @@ const command: BotCommand = {
     if (interaction.user.bot)
       return;
 
+    await interaction.deferReply();
+
     const response = await fetch(GoodWiki);
 
-    await interaction.reply({
+    await interaction.editReply({
       content: response.url,
     });
   }
