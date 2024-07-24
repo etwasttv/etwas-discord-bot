@@ -35,6 +35,7 @@
     "html-entities": "^2.5.2",
     "inversify": "^6.0.2",
     "libsodium-wrappers": "^0.7.13",
+    "node-html-parser": "^6.1.13",
     "pm2": "^5.4.0",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.8.0",
