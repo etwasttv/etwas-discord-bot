@@ -46,7 +46,7 @@ const command: BotCommand = {
 
     const unit = '';
     let ranking = `**今日の${getRankingTitle(category)}ランキング**\n`
-    ranking= '```\n';
+    ranking += '```\n';
     ranking += records.map(r => `${r.rank.toString().padStart(2, ' ')}位 ${r.point.padStart(maxPointLength, '　')} ${r.value} ${unit} (${r.time})`).join('\n');
     ranking += '\n```';
 
