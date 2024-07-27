@@ -160,10 +160,16 @@ class DiscordClient extends Client {
           await command.handler(interaction);
         } catch (e) {
           console.error(e);
-          await interaction.reply({
-            content: 'There was an error while executing this command!',
-            ephemeral: true,
-          });
+          try {
+            await interaction.reply({
+              content: 'コマンド実行中にエラーが起きたわよ！',
+              ephemeral: true,
+            });
+          } catch {
+            await interaction.editReply({
+              content: 'コマンド実行中にエラーが起きたわよ！',
+            });
+          }
         }
       }
     });
