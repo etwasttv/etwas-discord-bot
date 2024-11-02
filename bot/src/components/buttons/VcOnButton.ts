@@ -5,10 +5,11 @@ const customId = 'vc-on-button';
 
 const VcOnButton: Component<ButtonBuilder> = {
   customId,
-  generate: async () => new ButtonBuilder()
-    .setCustomId(customId)
-    .setLabel('読み上げをONにする')
-    .setStyle(ButtonStyle.Primary),
-}
+  generate: async () =>
+    new ButtonBuilder()
+      .setCustomId(customId)
+      .setLabel('読み上げをONにする')
+      .setStyle(ButtonStyle.Primary),
+};
 
-export { VcOnButton }
+export { VcOnButton };

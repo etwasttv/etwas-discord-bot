@@ -1,13 +1,13 @@
 import httpAsync from '@/core/httpAsync';
 
 type Speakers = {
-  name: string,
-  speaker_uuid: string,
+  name: string;
+  speaker_uuid: string;
   styles: {
-    name: string,
-    id: number,
-    type: string,
-  }[],
+    name: string;
+    id: number;
+    type: string;
+  }[];
 }[];
 
 async function getSpeakers() {
@@ -15,14 +15,20 @@ async function getSpeakers() {
     `${process.env.VOICEVOX_ENDPOINT!}/speakers`,
     {
       method: 'GET',
-    }, '');
+    },
+    '',
+  );
 
   const speakers: Speakers = JSON.parse(response.toString());
 
   return speakers;
 }
 
-async function generateVoice(query: Buffer, spakerId: number, speedScale: number): Promise<Buffer> {
+async function generateVoice(
+  query: Buffer,
+  spakerId: number,
+  speedScale: number,
+): Promise<Buffer> {
   const queryObject = JSON.parse(query.toString());
   queryObject['speedScale'] = speedScale;
   const requestQuery = Buffer.from(JSON.stringify(queryObject));
@@ -34,7 +40,9 @@ async function generateVoice(query: Buffer, spakerId: number, speedScale: number
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(requestQuery),
       },
-    }, requestQuery);
+    },
+    requestQuery,
+  );
 }
 
 async function generateQuery(text: string, speakerId: number) {
@@ -42,7 +50,9 @@ async function generateQuery(text: string, speakerId: number) {
     `${process.env.VOICEVOX_ENDPOINT!}/audio_query?speaker=${speakerId}&text=${encodeURIComponent(text)}`,
     {
       method: 'POST',
-    }, null);
+    },
+    null,
+  );
 }
 
-export { generateQuery, generateVoice, getSpeakers }
+export { generateQuery, generateVoice, getSpeakers };

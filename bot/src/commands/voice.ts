@@ -1,4 +1,8 @@
-import { ActionRowBuilder, SlashCommandBuilder, StringSelectMenuBuilder } from 'discord.js';
+import {
+  ActionRowBuilder,
+  SlashCommandBuilder,
+  StringSelectMenuBuilder,
+} from 'discord.js';
 import { container } from 'tsyringe';
 
 import { VoiceSelectMenu } from '@/components/stringSelectMenus/VoiceSelectMenu';
@@ -15,17 +19,21 @@ const command: BotCommand = {
     if (interaction.user.bot) return;
     if (!interaction.guild) return;
 
-    const speakerId = await voiceService.getSpeakerId(interaction.guild, interaction.user);
+    const speakerId = await voiceService.getSpeakerId(
+      interaction.guild,
+      interaction.user,
+    );
 
-    const row = new ActionRowBuilder<StringSelectMenuBuilder>()
-      .addComponents([await VoiceSelectMenu.generate(speakerId)]);
+    const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents([
+      await VoiceSelectMenu.generate(speakerId),
+    ]);
 
     await interaction.reply({
       content: '読み上げ音声設定',
       components: [row],
       ephemeral: true,
     });
-  }
-}
+  },
+};
 
 export default command;

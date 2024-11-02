@@ -7,7 +7,7 @@ const asyncLockSingleton = () => {
 type AsyncLockSingleton = ReturnType<typeof asyncLockSingleton>;
 
 const globalForAsyncLock = globalThis as unknown as {
-  asyncLock: AsyncLockSingleton | undefined,
+  asyncLock: AsyncLockSingleton | undefined;
 };
 
 export const asyncLock = globalForAsyncLock.asyncLock ?? asyncLockSingleton();

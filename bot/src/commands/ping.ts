@@ -5,11 +5,11 @@ const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Bot will response with pong!'),
-  handler: async interaction => {
+  handler: async (interaction) => {
     if (interaction.user.bot) return;
 
     await interaction.reply({
-      content: "pong!",
+      content: 'pong!',
     });
   },
 };

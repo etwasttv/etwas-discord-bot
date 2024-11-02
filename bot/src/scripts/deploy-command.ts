@@ -1,11 +1,11 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 
 import 'dotenv/config';
 import {
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes,
-} from "discord.js";
+} from 'discord.js';
 
 import fs from 'fs/promises';
 import { BotCommand } from '@/types/command';
@@ -25,15 +25,20 @@ container.register('IWikiService', { useValue: {} });
   try {
     const files = await fs.readdir(`${__dirname}/../commands`);
 
-    await Promise.all(files.map(async f => {
-      const command: BotCommand = (await import(`${__dirname}/../commands/${f}`)).default;
-      commands.push(command.builder.toJSON());
-    }));
+    await Promise.all(
+      files.map(async (f) => {
+        const command: BotCommand = (
+          await import(`${__dirname}/../commands/${f}`)
+        ).default;
+        commands.push(command.builder.toJSON());
+      }),
+    );
 
-    await rest.put(Routes.applicationCommands(process.env.BOT_CLIENT_ID!), { body: commands });
+    await rest.put(Routes.applicationCommands(process.env.BOT_CLIENT_ID!), {
+      body: commands,
+    });
     console.log(`Registered ${commands.length} application commands.`);
   } catch (e) {
     console.error(e);
   }
-
 })();

@@ -7,7 +7,6 @@ import { readdir } from 'fs/promises';
 import path from 'path';
 import { singleton } from 'tsyringe';
 
-
 @singleton()
 class DiscordClient extends Client {
   constructor() {
@@ -19,7 +18,7 @@ class DiscordClient extends Client {
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildPresences,
         GatewayIntentBits.MessageContent,
-      ]
+      ],
     });
   }
 
@@ -33,25 +32,28 @@ class DiscordClient extends Client {
   private async addEventListener(): Promise<number> {
     //  relative path to events folder from this file
     const directoryPath = '../../events';
-    if (!existsSync(`${__dirname}/${directoryPath}`))
-      return 0;
+    if (!existsSync(`${__dirname}/${directoryPath}`)) return 0;
 
-    const files = (await readdir(`${__dirname}/${directoryPath}`, { recursive: true }))
-      .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
+    const files = (
+      await readdir(`${__dirname}/${directoryPath}`, { recursive: true })
+    ).filter(
+      (file) => path.extname(file) === '.ts' || path.extname(file) === '.js',
+    );
 
     console.log(files);
-    await Promise.all(files.map(async file => {
-      try {
-        const event: BotEvent = (await import(`./${directoryPath}/${file}`)).default;
-        if (!event) return;
-        if (event.once)
-          this.once(event.eventName as string, event.listener);
-        else
-          this.on(event.eventName as string, event.listener);
-      } catch (e) {
-        console.error(e);
-      }
-    }));
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          const event: BotEvent = (await import(`./${directoryPath}/${file}`))
+            .default;
+          if (!event) return;
+          if (event.once) this.once(event.eventName as string, event.listener);
+          else this.on(event.eventName as string, event.listener);
+        } catch (e) {
+          console.error(e);
+        }
+      }),
+    );
 
     return files.length;
   }
@@ -59,22 +61,26 @@ class DiscordClient extends Client {
   private async loadButtonComponents(): Promise<number> {
     const handlers = new Collection<string, ButtonHandler>();
     const directoryPath = '../../handlers/buttons';
-    if (!existsSync(`${__dirname}/${directoryPath}`))
-      return 0;
+    if (!existsSync(`${__dirname}/${directoryPath}`)) return 0;
 
-    const files = (await readdir(`${__dirname}/${directoryPath}`))
-      .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
-    await Promise.all(files.map(async file => {
-      try {
-        const handler: ButtonHandler = (await import(`./${directoryPath}/${file}`)).default;
-        if (!handler) return;
-        handlers.set(handler.customId, handler);
-      } catch (e) {
-        console.error(e);
-      }
-    }));
+    const files = (await readdir(`${__dirname}/${directoryPath}`)).filter(
+      (file) => path.extname(file) === '.ts' || path.extname(file) === '.js',
+    );
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          const handler: ButtonHandler = (
+            await import(`./${directoryPath}/${file}`)
+          ).default;
+          if (!handler) return;
+          handlers.set(handler.customId, handler);
+        } catch (e) {
+          console.error(e);
+        }
+      }),
+    );
 
-    this.on(Events.InteractionCreate, async interaction => {
+    this.on(Events.InteractionCreate, async (interaction) => {
       if (interaction.user.bot) return;
       if (interaction.isButton()) {
         try {
@@ -97,22 +103,26 @@ class DiscordClient extends Client {
   private async loadStringSelectMenuComponents(): Promise<number> {
     const handlers = new Collection<string, StringSelectMenuHandler>();
     const directoryPath = '../../handlers/stringSelectMenus';
-    if (!existsSync(`${__dirname}/${directoryPath}`))
-      return 0;
+    if (!existsSync(`${__dirname}/${directoryPath}`)) return 0;
 
-    const files = (await readdir(`${__dirname}/${directoryPath}`))
-      .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
-    await Promise.all(files.map(async file => {
-      try {
-        const handler: StringSelectMenuHandler = (await import(`./${directoryPath}/${file}`)).default;
-        if (!handler) return;
-        handlers.set(handler.customId, handler);
-      } catch (e) {
-        console.error(e);
-      }
-    }));
+    const files = (await readdir(`${__dirname}/${directoryPath}`)).filter(
+      (file) => path.extname(file) === '.ts' || path.extname(file) === '.js',
+    );
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          const handler: StringSelectMenuHandler = (
+            await import(`./${directoryPath}/${file}`)
+          ).default;
+          if (!handler) return;
+          handlers.set(handler.customId, handler);
+        } catch (e) {
+          console.error(e);
+        }
+      }),
+    );
 
-    this.on(Events.InteractionCreate, async interaction => {
+    this.on(Events.InteractionCreate, async (interaction) => {
       if (interaction.user.bot) return;
       if (interaction.isStringSelectMenu()) {
         try {
@@ -135,22 +145,26 @@ class DiscordClient extends Client {
   private async loadCommands(): Promise<number> {
     const commands = new Collection<string, BotCommand>();
     const directoryPath = '../../commands';
-    if (!existsSync(`${__dirname}/${directoryPath}`))
-      return 0;
+    if (!existsSync(`${__dirname}/${directoryPath}`)) return 0;
 
-    const files = (await readdir(`${__dirname}/${directoryPath}`))
-      .filter(file => path.extname(file) === '.ts' || path.extname(file) === '.js');
-    await Promise.all(files.map(async file => {
-      try {
-        const command: BotCommand = (await import(`./${directoryPath}/${file}`)).default;
-        if (!command) return;
-        commands.set(command.builder.name, command);
-      } catch (e) {
-        console.error(e);
-      }
-    }));
+    const files = (await readdir(`${__dirname}/${directoryPath}`)).filter(
+      (file) => path.extname(file) === '.ts' || path.extname(file) === '.js',
+    );
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          const command: BotCommand = (
+            await import(`./${directoryPath}/${file}`)
+          ).default;
+          if (!command) return;
+          commands.set(command.builder.name, command);
+        } catch (e) {
+          console.error(e);
+        }
+      }),
+    );
 
-    this.on(Events.InteractionCreate, async interaction => {
+    this.on(Events.InteractionCreate, async (interaction) => {
       if (interaction.user.bot) return;
 
       if (interaction.isCommand()) {
@@ -178,4 +192,4 @@ class DiscordClient extends Client {
   }
 }
 
-export { DiscordClient }
+export { DiscordClient };

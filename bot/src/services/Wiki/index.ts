@@ -11,8 +11,7 @@ class WikiService implements IWikiService {
   async getThumbnail(title: string): Promise<string> {
     const result = await fetch(THUMBNAIL_ENDPOINT + title);
 
-    if (!result.ok)
-      return '';
+    if (!result.ok) return '';
 
     const data = await result.json();
 
@@ -22,8 +21,7 @@ class WikiService implements IWikiService {
   async getDescription(title: string): Promise<string> {
     const result = await fetch(THUMBNAIL_ENDPOINT + title);
 
-    if (!result.ok)
-      return '';
+    if (!result.ok) return '';
 
     const data = await result.json();
 
@@ -31,4 +29,4 @@ class WikiService implements IWikiService {
   }
 }
 
-export { type IWikiService, WikiService }
+export { type IWikiService, WikiService };

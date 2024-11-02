@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import 'dotenv/config';
 
 import { container, Lifecycle } from 'tsyringe';
@@ -11,15 +11,22 @@ import { EmojiService } from '@/services/Emoji';
 import { ITimerService, TimerService } from '@/services/timer';
 import { WikiService } from '@/services/Wiki';
 
-container.register('DiscordClient', { useClass: DiscordClient }, { lifecycle: Lifecycle.Singleton });
+container.register(
+  'DiscordClient',
+  { useClass: DiscordClient },
+  { lifecycle: Lifecycle.Singleton },
+);
 
 container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
 container.register('IEmojiService', { useClass: EmojiService });
-container.register('ITimerService', { useClass: TimerService }, { lifecycle: Lifecycle.Singleton });
+container.register(
+  'ITimerService',
+  { useClass: TimerService },
+  { lifecycle: Lifecycle.Singleton },
+);
 container.register('IWikiService', { useClass: WikiService });
-
 
 const discordClient = container.resolve<DiscordClient>('DiscordClient');
 

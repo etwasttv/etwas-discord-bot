@@ -2,7 +2,15 @@ import { Guild, User, VoiceChannel } from 'discord.js';
 import { injectable } from 'tsyringe';
 
 import { generateQuery, generateVoice } from '@/core/voice';
-import { AudioPlayer, VoiceConnectionReadyState, VoiceConnectionStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
+import {
+  AudioPlayer,
+  VoiceConnectionReadyState,
+  VoiceConnectionStatus,
+  createAudioPlayer,
+  createAudioResource,
+  getVoiceConnection,
+  joinVoiceChannel,
+} from '@discordjs/voice';
 import { Readable } from 'stream';
 import { prisma } from '@/core/prisma';
 
@@ -17,9 +25,9 @@ interface IVoiceService {
 
 @injectable()
 class VoiceService implements IVoiceService {
-  private URL = new RegExp('https?://[\\w!?/+\\-_~;.,*&@#=$%()\'[\\]]+', 'g');
-  private CODEBLOCK = new RegExp(/```.*```/gsm);
-  private CODELINE = new RegExp(/`.*`/gsm);
+  private URL = new RegExp("https?://[\\w!?/+\\-_~;.,*&@#=$%()'[\\]]+", 'g');
+  private CODEBLOCK = new RegExp(/```.*```/gms);
+  private CODELINE = new RegExp(/`.*`/gms);
   private convert(text: string) {
     let fixedText = text.replaceAll(this.URL, 'URL省略');
     fixedText = fixedText.replaceAll(this.CODEBLOCK, 'コードブロック省略');
@@ -33,8 +41,8 @@ class VoiceService implements IVoiceService {
         guildId_userId: {
           guildId: guild.id,
           userId: user.id,
-        }
-      }
+        },
+      },
     });
 
     if (!exist)
@@ -43,7 +51,7 @@ class VoiceService implements IVoiceService {
           guildId: guild.id,
           userId: user.id,
           speakerId: spakerId,
-        }
+        },
       });
     else
       await prisma.voice.update({
@@ -55,7 +63,7 @@ class VoiceService implements IVoiceService {
         },
         data: {
           speakerId: spakerId,
-        }
+        },
       });
   }
 
@@ -65,8 +73,8 @@ class VoiceService implements IVoiceService {
         guildId_userId: {
           guildId: guild.id,
           userId: user.id,
-        }
-      }
+        },
+      },
     });
 
     return config?.speakerId ?? 3;
@@ -74,13 +82,12 @@ class VoiceService implements IVoiceService {
 
   async read(voiceChannel: VoiceChannel, user: User, text: string) {
     const connection = getVoiceConnection(voiceChannel.guildId);
-    if (!connection)
-      return;
-    if (!this.isConnectTo(voiceChannel))
-      return;
+    if (!connection) return;
+    if (!this.isConnectTo(voiceChannel)) return;
 
-    const subscription = (connection.state as VoiceConnectionReadyState).subscription;
-    let player: AudioPlayer|undefined = subscription?.player;
+    const subscription = (connection.state as VoiceConnectionReadyState)
+      .subscription;
+    let player: AudioPlayer | undefined = subscription?.player;
     if (!player) {
       player = createAudioPlayer();
       connection.subscribe(player);
@@ -112,16 +119,20 @@ class VoiceService implements IVoiceService {
 
   isConnectTo(voiceChannel: VoiceChannel): boolean {
     const connection = getVoiceConnection(voiceChannel.guildId);
-    return !!connection
-      && connection.state.status !== VoiceConnectionStatus.Disconnected
-      && connection.joinConfig.channelId === voiceChannel.id;
+    return (
+      !!connection &&
+      connection.state.status !== VoiceConnectionStatus.Disconnected &&
+      connection.joinConfig.channelId === voiceChannel.id
+    );
   }
 
   disconnect(voiceChannel: VoiceChannel) {
     const connection = getVoiceConnection(voiceChannel.guildId);
-    if (!connection
-      || connection.state.status === VoiceConnectionStatus.Disconnected
-      || connection.joinConfig.channelId !== voiceChannel.id)
+    if (
+      !connection ||
+      connection.state.status === VoiceConnectionStatus.Disconnected ||
+      connection.joinConfig.channelId !== voiceChannel.id
+    )
       return;
 
     connection.disconnect();
@@ -129,4 +140,4 @@ class VoiceService implements IVoiceService {
   }
 }
 
-export { VoiceService, type IVoiceService }
+export { VoiceService, type IVoiceService };

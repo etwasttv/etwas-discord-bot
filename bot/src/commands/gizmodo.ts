@@ -3,15 +3,17 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { XMLParser } from 'fast-xml-parser';
 import { parse } from 'node-html-parser';
 
-
 const JapanNewsHeadling = 'http://www.gizmodo.jp/atom.xml';
-const xmlParser = new XMLParser({ ignoreDeclaration: true, ignoreAttributes: false });
+const xmlParser = new XMLParser({
+  ignoreDeclaration: true,
+  ignoreAttributes: false,
+});
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('gizmodo')
     .setDescription('Gizmodo Rssを利用して記事を表示します'),
-  handler: async interaction => {
+  handler: async (interaction) => {
     if (interaction.user.bot) return;
 
     await interaction.deferReply();
@@ -20,7 +22,9 @@ const command: BotCommand = {
     const content = await response.text();
     const rss = <GizmodoRss>xmlParser.parse(content);
 
-    const entry = gizmodoEntry2Entry(rss.feed.entry[Math.floor(Math.random() * rss.feed.entry.length)]);
+    const entry = gizmodoEntry2Entry(
+      rss.feed.entry[Math.floor(Math.random() * rss.feed.entry.length)],
+    );
 
     const page = await fetch(entry.link);
     const pageRoot = parse(await page.text());
@@ -38,24 +42,25 @@ const command: BotCommand = {
       .setTimestamp(entry.published)
       .setFooter({ text: entry.author });
 
-    if (thumbnail)
-      embed.setImage(thumbnail['_attrs']['src']);
+    if (thumbnail) embed.setImage(thumbnail['_attrs']['src']);
 
     await interaction.editReply({
       embeds: [embed],
     });
-  }
-}
+  },
+};
 
 function gizmodoEntry2Entry(e: GizmodoEntry) {
-  return <Entry> {
+  return <Entry>{
     title: e.title,
     link: e.link['@_href'],
     author: e.author.name,
     published: new Date(e.published),
     summary: e.summary,
-    content: e.content['#text'] + `[${e.content.a['#text']}](${e.content.a['@_href']})`,
-  }
+    content:
+      e.content['#text'] +
+      `[${e.content.a['#text']}](${e.content.a['@_href']})`,
+  };
 }
 
 type Entry = {
@@ -65,7 +70,7 @@ type Entry = {
   published: Date;
   summary: string;
   content: string;
-}
+};
 
 type GizmodoRss = {
   feed: {
@@ -75,7 +80,7 @@ type GizmodoRss = {
     id: string;
     subtitle: string;
     entry: GizmodoEntry[];
-  }
+  };
 };
 
 type GizmodoEntry = {
@@ -100,8 +105,8 @@ type GizmodoEntry = {
     a: {
       '@_href': string;
       '#text': string;
-    }
-  }
-}
+    };
+  };
+};
 
 export default command;

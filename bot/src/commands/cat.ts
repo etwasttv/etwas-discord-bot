@@ -5,12 +5,14 @@ const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('cat')
     .setDescription('Return random cat images.'),
-  handler: async interaction => {
+  handler: async (interaction) => {
     if (interaction.user.bot) return;
     await interaction.deferReply();
 
     try {
-      const response = await fetch('https://api.thecatapi.com/v1/images/search');
+      const response = await fetch(
+        'https://api.thecatapi.com/v1/images/search',
+      );
       if (!response.ok) {
         await interaction.editReply({
           content: '(=^・^=)',

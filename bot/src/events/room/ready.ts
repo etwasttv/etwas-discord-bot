@@ -13,12 +13,15 @@ const event: BotEvent = {
     const guilds = await client.guilds.fetch();
     for (const [_1, oA2guild] of guilds) {
       const guild = await oA2guild.fetch();
-      const channels = (await guild.channels.fetch()).filter(ch => ch instanceof VoiceChannel);
+      const channels = (await guild.channels.fetch()).filter(
+        (ch) => ch instanceof VoiceChannel,
+      );
       for (const [_2, voiceChannel] of channels) {
-        if (voiceChannel) await roomService.syncRoom(voiceChannel as VoiceChannel);
+        if (voiceChannel)
+          await roomService.syncRoom(voiceChannel as VoiceChannel);
       }
     }
-  }
-}
+  },
+};
 
 export default event;

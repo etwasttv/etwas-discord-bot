@@ -10,16 +10,15 @@ const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('flag')
     .setDescription('Return random emoji flag.'),
-  handler: async interaction => {
-    if (interaction.user.bot)
-      return;
+  handler: async (interaction) => {
+    if (interaction.user.bot) return;
 
     const emoji = await emojiService.flagGacha();
 
     await interaction.reply({
       content: emoji,
     });
-  }
-}
+  },
+};
 
 export default command;

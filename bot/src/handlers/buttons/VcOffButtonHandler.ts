@@ -13,20 +13,23 @@ const roomService = container.resolve<IRoomService>('IRoomService');
 const handler: ButtonHandler = {
   customId: VcOffButton.customId,
   handler: async (interaction) => {
-    if (!interaction.channelId)
-      return;
+    if (!interaction.channelId) return;
 
-    const voiceChannel = await roomService.getVoiceChannel(interaction.channel as TextChannel);
-    if (!voiceChannel)
-      return;
+    const voiceChannel = await roomService.getVoiceChannel(
+      interaction.channel as TextChannel,
+    );
+    if (!voiceChannel) return;
     voiceService.disconnect(voiceChannel);
 
     await roomService.setVoice(voiceChannel, false);
     await interaction.update({
       components: [
-        new ActionRowBuilder<ButtonBuilder>()
-          .addComponents([ await VcOnButton.generate() ])]});
-  }
-}
+        new ActionRowBuilder<ButtonBuilder>().addComponents([
+          await VcOnButton.generate(),
+        ]),
+      ],
+    });
+  },
+};
 
 export default handler;

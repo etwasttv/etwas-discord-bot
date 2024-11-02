@@ -5,7 +5,7 @@ const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('dog')
     .setDescription('Return random dog images.'),
-  handler: async interaction => {
+  handler: async (interaction) => {
     if (interaction.user.bot) return;
     await interaction.deferReply();
 

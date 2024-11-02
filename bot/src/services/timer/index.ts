@@ -5,46 +5,68 @@ import { inject, singleton } from 'tsyringe';
 
 interface TimerObject {
   timerId?: string;
-  guildId: string|null;
+  guildId: string | null;
   timeoutId: NodeJS.Timeout;
-  channelId: string|null;
+  channelId: string | null;
   userId: string;
   timerSeconds: number;
   scheduledAt: Date;
-  mention?: string|null;
-  message?: string|null;
+  mention?: string | null;
+  message?: string | null;
 }
 
 interface ITimerService {
   init(): Promise<void>;
-  setTimer(guild: Guild|null, textChannel: TextBasedChannel|null, user: User, timerSeconds: number, memtion: string|undefined, message: string|undefined|null): Promise<string>;
-  cancelTimer(guild: Guild|null, textChannel: TextBasedChannel|null, user: User, timerId: string): Promise<boolean>;
-  getTimerList(guild: Guild|null, user: User): Promise<TimerObject[]>;
+  setTimer(
+    guild: Guild | null,
+    textChannel: TextBasedChannel | null,
+    user: User,
+    timerSeconds: number,
+    memtion: string | undefined,
+    message: string | undefined | null,
+  ): Promise<string>;
+  cancelTimer(
+    guild: Guild | null,
+    textChannel: TextBasedChannel | null,
+    user: User,
+    timerId: string,
+  ): Promise<boolean>;
+  getTimerList(guild: Guild | null, user: User): Promise<TimerObject[]>;
 }
 
 @singleton()
 class TimerService implements ITimerService {
+  private timerObjects: Map<string, TimerObject> = new Map<
+    string,
+    TimerObject
+  >();
 
-  private timerObjects: Map<string, TimerObject> = new Map<string, TimerObject>();
+  constructor(@inject('DiscordClient') private discordClient: DiscordClient) {}
 
-  constructor(@inject('DiscordClient') private discordClient: DiscordClient) {
-
-  }
-
-  async cancelTimer(guild: Guild|null, textChannel: TextBasedChannel|null, user: User, timerId: string): Promise<boolean> {
+  async cancelTimer(
+    guild: Guild | null,
+    textChannel: TextBasedChannel | null,
+    user: User,
+    timerId: string,
+  ): Promise<boolean> {
     try {
       const timer = await prisma.timer.findUnique({
         where: {
           id: timerId,
           isCanceled: false,
           isTriggered: false,
-        }
+        },
       });
       if (!timer) return false;
 
       const guildId = guild?.id ?? null;
 
-      if (timer.guildId !== guildId || timer.id !== timerId || timer.userId !== user.id) return false;
+      if (
+        timer.guildId !== guildId ||
+        timer.id !== timerId ||
+        timer.userId !== user.id
+      )
+        return false;
 
       await prisma.timer.update({
         where: {
@@ -52,7 +74,7 @@ class TimerService implements ITimerService {
         },
         data: {
           isCanceled: true,
-        }
+        },
       });
       const timeoutId = this.timerObjects.get(timerId)?.timeoutId;
       if (timeoutId) clearTimeout(timeoutId);
@@ -63,10 +85,10 @@ class TimerService implements ITimerService {
     return true;
   }
 
-  async getTimerList(guild: Guild|null, user: User): Promise<TimerObject[]> {
+  async getTimerList(guild: Guild | null, user: User): Promise<TimerObject[]> {
     const timers = Array.from(this.timerObjects.values());
     const guildId = guild?.id ?? null;
-    return timers.filter(t => t.guildId === guildId && t.userId === user.id);
+    return timers.filter((t) => t.guildId === guildId && t.userId === user.id);
   }
 
   async init() {
@@ -74,15 +96,31 @@ class TimerService implements ITimerService {
       where: {
         isCanceled: false,
         isTriggered: false,
-      }
+      },
     });
 
     for (const timer of timers) {
-      this.initTimer(timer.id, timer.userId, timer.guildId, timer.channelId, timer.timerSeconds, timer.mention, timer.mention, timer.scheduledAt);
+      this.initTimer(
+        timer.id,
+        timer.userId,
+        timer.guildId,
+        timer.channelId,
+        timer.timerSeconds,
+        timer.mention,
+        timer.mention,
+        timer.scheduledAt,
+      );
     }
   }
 
-  async setTimer(guild: Guild|null, channel: TextBasedChannel|null, user: User, timerSeconds: number, mention: string|undefined = undefined, message: string|undefined = undefined) {
+  async setTimer(
+    guild: Guild | null,
+    channel: TextBasedChannel | null,
+    user: User,
+    timerSeconds: number,
+    mention: string | undefined = undefined,
+    message: string | undefined = undefined,
+  ) {
     const scheduledAt = new Date();
     scheduledAt.setUTCSeconds(scheduledAt.getUTCSeconds() + timerSeconds);
     const timer = await prisma.timer.create({
@@ -94,10 +132,19 @@ class TimerService implements ITimerService {
         scheduledAt: scheduledAt,
         mention: mention,
         message: message,
-      }
+      },
     });
 
-    this.initTimer(timer.id, user.id, guild?.id, channel?.id, timerSeconds, mention, message, scheduledAt);
+    this.initTimer(
+      timer.id,
+      user.id,
+      guild?.id,
+      channel?.id,
+      timerSeconds,
+      mention,
+      message,
+      scheduledAt,
+    );
 
     return timer.id;
   }
@@ -105,11 +152,11 @@ class TimerService implements ITimerService {
   private initTimer(
     timerId: string,
     userId: string,
-    guildId: string|undefined|null,
-    channelId: string|undefined|null,
+    guildId: string | undefined | null,
+    channelId: string | undefined | null,
     timerSeconds: number,
-    mention: string|undefined|null,
-    message: string|undefined|null,
+    mention: string | undefined | null,
+    message: string | undefined | null,
     scheduledAt: Date,
   ) {
     if (this.timerObjects.get(timerId)?.timeoutId) return;
@@ -140,15 +187,20 @@ class TimerService implements ITimerService {
       },
       data: {
         isTriggered: true,
-      }
+      },
     });
     this.timerObjects.delete(timerId);
 
-    let textChannel: TextBasedChannel|null = null;
+    let textChannel: TextBasedChannel | null = null;
     if (triggeredTimer.channelId)
-      textChannel = await this.discordClient.channels.fetch(triggeredTimer.channelId, { allowUnknownGuild: true }) as TextBasedChannel;
+      textChannel = (await this.discordClient.channels.fetch(
+        triggeredTimer.channelId,
+        { allowUnknownGuild: true },
+      )) as TextBasedChannel;
     else
-      textChannel = await (await this.discordClient.users.fetch(triggeredTimer.userId)).createDM(true);
+      textChannel = await (
+        await this.discordClient.users.fetch(triggeredTimer.userId)
+      ).createDM(true);
     if (!textChannel) return;
 
     let msg = triggeredTimer.mention ?? '';
@@ -161,19 +213,16 @@ class TimerService implements ITimerService {
 
 function convertSecondsToTimeString(seconds: number) {
   let timerSeconds = seconds;
-  const timerHours = timerSeconds / 3600 | 0;
+  const timerHours = (timerSeconds / 3600) | 0;
   timerSeconds %= 3600;
-  const timerMinutes = timerSeconds / 60 | 0;
+  const timerMinutes = (timerSeconds / 60) | 0;
   timerSeconds %= 60;
 
   let timeString = '';
-  if (timerHours > 0)
-    timeString += `${timerHours}時間`;
-  if (timerMinutes > 0)
-    timeString += `${timerMinutes}分`;
-  if (timerSeconds > 0)
-    timeString += `${timerSeconds}秒`;
+  if (timerHours > 0) timeString += `${timerHours}時間`;
+  if (timerMinutes > 0) timeString += `${timerMinutes}分`;
+  if (timerSeconds > 0) timeString += `${timerSeconds}秒`;
   return timeString;
 }
 
-export { type ITimerService, TimerService, convertSecondsToTimeString }
+export { type ITimerService, TimerService, convertSecondsToTimeString };

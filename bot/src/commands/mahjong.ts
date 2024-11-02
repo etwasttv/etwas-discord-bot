@@ -7,12 +7,14 @@ const command: BotCommand = {
   builder: new SlashCommandBuilder()
     .setName('mahjong')
     .setDescription('配牌ガチャ'),
-  handler: async interaction => {
+  handler: async (interaction) => {
     if (interaction.user.bot) return;
     await interaction.deferReply();
 
     try {
-      const response = await fetch(`${process.env.CNNAPI_ENDPOINT!}/mahjong/tiledealingimg`);
+      const response = await fetch(
+        `${process.env.CNNAPI_ENDPOINT!}/mahjong/tiledealingimg`,
+      );
       if (!response.ok) {
         await interaction.editReply({
           content: ':mahjong:',
@@ -27,9 +29,11 @@ const command: BotCommand = {
 
       await interaction.editReply({
         content: situation,
-        files: [new AttachmentBuilder(Buffer.from(buffer), {
-          name: 'mahjong.png',
-        })],
+        files: [
+          new AttachmentBuilder(Buffer.from(buffer), {
+            name: 'mahjong.png',
+          }),
+        ],
       });
     } catch (e) {
       console.error(e);

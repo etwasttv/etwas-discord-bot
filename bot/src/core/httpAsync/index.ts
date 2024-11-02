@@ -1,9 +1,9 @@
 import http from 'http';
 
 export default {
-  get: async function(url: string) {
+  get: async function (url: string) {
     return new Promise<Buffer>((resolve, reject) => {
-      http.get(url, res => {
+      http.get(url, (res) => {
         const data: any[] = [];
         res.on('data', (chunk) => data.push(chunk));
         res.on('end', () => {
@@ -13,13 +13,18 @@ export default {
       });
     });
   },
-  request: async function(url: string, options: http.RequestOptions, body: any) {
+  request: async function (
+    url: string,
+    options: http.RequestOptions,
+    body: any,
+  ) {
     return new Promise<Buffer>((resolve, reject) => {
-      const client = http.request(url, options, res => {
+      const client = http.request(url, options, (res) => {
         const data: any[] = [];
         res.on('data', (chunk) => data.push(chunk));
         res.on('end', () => {
-          if (res.statusCode === 200 || res.statusCode === 201) resolve(Buffer.concat(data));
+          if (res.statusCode === 200 || res.statusCode === 201)
+            resolve(Buffer.concat(data));
           else reject();
         });
       });
@@ -27,4 +32,4 @@ export default {
       else client.end();
     });
   },
-}
+};

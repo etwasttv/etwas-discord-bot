@@ -5,13 +5,13 @@ import {
 } from 'discord.js';
 
 type CMD =
-  SlashCommandBuilder
+  | SlashCommandBuilder
   | SlashCommandSubcommandsOnlyBuilder
   | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>;
 
 type BotCommand = {
-  builder: CMD,
-  handler: (interaction: CommandInteraction) => Promise<void>,
+  builder: CMD;
+  handler: (interaction: CommandInteraction) => Promise<void>;
 };
 
 export { BotCommand };

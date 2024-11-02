@@ -1,12 +1,15 @@
 import { Component } from '@/types/component';
-import { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
+import {
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+} from 'discord.js';
 
 const customId = 'voiceselect-menu';
 
 type SPEAKER_INFO = {
-  label: string,
-  description: string,
-  value: string,
+  label: string;
+  description: string;
+  value: string;
 };
 
 const SPEAKERS: SPEAKER_INFO[] = [
@@ -23,7 +26,7 @@ const SPEAKERS: SPEAKER_INFO[] = [
   {
     label: '四国めたん（ツンツン）',
     description: '四国めたん - ツンツン',
-    value: '6'
+    value: '6',
   },
   {
     label: '四国めたん（セクシー）',
@@ -118,13 +121,16 @@ const VoiceSelectMenu: Component<StringSelectMenuBuilder> = {
     return new StringSelectMenuBuilder()
       .setCustomId(customId)
       .setPlaceholder('声色を選択してください')
-      .addOptions(SPEAKERS
-          .map(speaker => new StringSelectMenuOptionBuilder()
+      .addOptions(
+        SPEAKERS.map((speaker) =>
+          new StringSelectMenuOptionBuilder()
             .setLabel(speaker.label)
             .setDescription(speaker.description)
             .setValue(speaker.value)
-            .setDefault(speaker.value === current.toString())));
-  }
-}
+            .setDefault(speaker.value === current.toString()),
+        ),
+      );
+  },
+};
 
-export { VoiceSelectMenu }
+export { VoiceSelectMenu };
