@@ -14,6 +14,7 @@ import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
 import { type IVoiceService } from '@/services/Voice';
 import { prisma } from '@/core/prisma';
+import { IMinecraftService } from '@/services/Minecraft';
 
 interface IRoomService {
   syncRoom(voiceChannel: VoiceChannel): Promise<void>;
@@ -24,7 +25,10 @@ interface IRoomService {
 
 @injectable()
 class RoomService implements IRoomService {
-  constructor(@inject('IVoiceService') private voiceService: IVoiceService) {}
+  constructor(
+    @inject('IVoiceService') private voiceService: IVoiceService,
+    @inject('IMinecraftService') private minecraftService: IMinecraftService
+  ) {}
 
   async syncRoom(voiceChannel: VoiceChannel) {
     if (voiceChannel.guild.afkChannelId === voiceChannel.id) {
@@ -173,10 +177,9 @@ class RoomService implements IRoomService {
     textChannel: TextChannel,
   ) {
     //  テキストチャンネルに入っていないメンバーをテキストチャンネルに追加
+    const joinMembers = voiceChannel.members.filter((vMember) => !textChannel.members.has(vMember.id));
     await Promise.all(
-      voiceChannel.members
-        .filter((vMember) => !textChannel.members.has(vMember.id))
-        .map((vMember) =>
+      joinMembers.map((vMember) =>
           textChannel.permissionOverwrites.create(vMember, {
             ViewChannel: true,
             ReadMessageHistory: true,
@@ -191,6 +194,9 @@ class RoomService implements IRoomService {
         .filter((tMember) => !voiceChannel.members.has(tMember.id))
         .map((tMember) => textChannel.permissionOverwrites.delete(tMember)),
     );
+
+    if (joinMembers.size > 0)
+      await this.minecraftService.send('といといほー', `🔊${voiceChannel.name}に${voiceChannel.members.size}人入室しています`);
   }
 
   async getTextChannel(voiceChannel: VoiceChannel) {
