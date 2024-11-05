@@ -27,7 +27,6 @@ interface IRoomService {
 class RoomService implements IRoomService {
   constructor(
     @inject('IVoiceService') private voiceService: IVoiceService,
-    @inject('IMinecraftService') private minecraftService: IMinecraftService
   ) {}
 
   async syncRoom(voiceChannel: VoiceChannel) {
@@ -177,9 +176,10 @@ class RoomService implements IRoomService {
     textChannel: TextChannel,
   ) {
     //  テキストチャンネルに入っていないメンバーをテキストチャンネルに追加
-    const joinMembers = voiceChannel.members.filter((vMember) => !textChannel.members.has(vMember.id));
     await Promise.all(
-      joinMembers.map((vMember) =>
+      voiceChannel.members
+        .filter((vMember) => !textChannel.members.has(vMember.id))
+        .map((vMember) =>
           textChannel.permissionOverwrites.create(vMember, {
             ViewChannel: true,
             ReadMessageHistory: true,
@@ -194,9 +194,6 @@ class RoomService implements IRoomService {
         .filter((tMember) => !voiceChannel.members.has(tMember.id))
         .map((tMember) => textChannel.permissionOverwrites.delete(tMember)),
     );
-
-    if (joinMembers.size > 0)
-      await this.minecraftService.send('といといほー', `🔊${voiceChannel.name}に${voiceChannel.members.size}人入室しています`);
   }
 
   async getTextChannel(voiceChannel: VoiceChannel) {
