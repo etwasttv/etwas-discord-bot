@@ -26,6 +26,9 @@ jobs:
           echo 'CNNAPI_ENDPOINT="${{ secrets.CNNAPI_ENDPOINT }}"' >> .env
           echo 'TWITCH_CLIENT_ID="${{ secrets.TWITCH_CLIENT_ID }}"' >> .env
           echo 'TWITCH_CLIENT_SECRET="${{ secrets.TWITCH_CLIENT_SECRET }}"' >> .env
+          echo 'MC_API_ENDPOINT="${{ secrets.MC_API_ENDPOINT }}"' >> .env
+          echo 'MC_API_TOKEN="${{ secrets.MC_API_TOKEN }}"' >> .env
+          echo 'MC_CHAT_CHANNEL="${{ secrets.MC_CHAT_CHANNEL }}"' >> .env
       - name: Deploy Application Command
         run: npm run deploy-command
       - run: npx prisma migrate deploy
