@@ -1,16 +1,22 @@
 import { BotCommand } from '@/types/command';
 import { CommandInteractionOptionResolver, SlashCommandBuilder } from 'discord.js';
 
-function judge(number: number): boolean {
-  if (number <= 1) return false;
-  if (number === 2) return true;
-  if (number%2 === 0) return false;
+type SosuJudge = {
+  isSosu: boolean;
+  dividedBy?: number;
+  error?: string;
+}
+
+function judge(number: number): SosuJudge {
+  if (number <= 1) return { isSosu: false, error: '入力値が不正' };
+  if (number === 2) return { isSosu: true };
+  if (number%2 === 0) return { isSosu: false, dividedBy: 2 };
   let d = 3;
   while (d <= Math.sqrt(number)) {
-    if (number%d === 0) return false;
+    if (number%d === 0) return { isSosu: false, dividedBy: d };
     d += 2;
   }
-  return true;
+  return { isSosu: true };
 }
 
 const command: BotCommand = {
@@ -27,9 +33,9 @@ const command: BotCommand = {
     const options = interaction.options as CommandInteractionOptionResolver;
     const number = options.getInteger('number');
 
-    if (!number) {
+    if (!number || number < 2) {
       await interaction.reply({
-        content: '数を指定してね',
+        content: '2以上の数を指定してね',
         ephemeral: true,
       });
       return;
@@ -38,16 +44,19 @@ const command: BotCommand = {
     await interaction.deferReply();
 
     const isSosu = judge(number);
-    if (isSosu) {
+    if (isSosu.isSosu) {
       await interaction.editReply({
         content: `${number} は素数です！`,
       });
     }
-    else {
+    else if (isSosu.dividedBy) {
       await interaction.editReply({
-        content: `${number} は素数ではありません！`,
+        content: `${number} は素数ではありません！ ${isSosu.dividedBy} で割ることができます`,
       });
     }
+    await interaction.editReply({
+      content: `${number} が素数かどうか判定中できませんでした`,
+    });
   },
 };
 
