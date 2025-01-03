@@ -48,14 +48,16 @@ const command: BotCommand = {
       await interaction.editReply({
         content: `${number} は素数です！`,
       });
+      return;
     }
     else if (isSosu.dividedBy) {
       await interaction.editReply({
         content: `${number} は素数ではありません！ ${isSosu.dividedBy} で割ることができます`,
       });
+      return;
     }
     await interaction.editReply({
-      content: `${number} が素数かどうか判定中できませんでした`,
+      content: `${number} が素数かどうか判定できませんでした`,
     });
   },
 };
