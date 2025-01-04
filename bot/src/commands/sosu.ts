@@ -39,6 +39,7 @@ function factorize(number: number): Array<number> {
 }
 
 function generateUe(value: number): string {
+  if (value === 1) return '';
   let result = '';
   let x = value;
 
