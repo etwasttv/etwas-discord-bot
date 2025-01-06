@@ -1,9 +1,14 @@
 name: Deploy to B590
 
-on: [ workflow_dispatch ]
+on:
+  pull_request:
+    branches:
+      - release
+    types: [closed]
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     runs-on: self-hosted
     defaults:
       run:
