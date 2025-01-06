@@ -17,7 +17,7 @@
     "@types/websocket": "^1.0.10",
     "eslint": "^8.52.0",
     "eslint-config-prettier": "^9.1.0",
-    "prettier": "^3.3.3",
+    "prettier": "^3.4.2",
     "prisma": "^5.14.0",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.8.10",

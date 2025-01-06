@@ -1,20 +1,14 @@
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
   ChannelType,
   OverwriteResolvable,
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
 
-import { inject, injectable } from 'tsyringe';
+import { injectable } from 'tsyringe';
 
-import { VcOffButton } from '@/components/buttons/VcOffButton';
-import { VcOnButton } from '@/components/buttons/VcOnButton';
 import { asyncLock } from '@/core/async-lock';
-import { type IVoiceService } from '@/services/Voice';
 import { prisma } from '@/core/prisma';
-import { IMinecraftService } from '@/services/Minecraft';
 
 interface IRoomService {
   syncRoom(voiceChannel: VoiceChannel): Promise<void>;
@@ -25,10 +19,6 @@ interface IRoomService {
 
 @injectable()
 class RoomService implements IRoomService {
-  constructor(
-    @inject('IVoiceService') private voiceService: IVoiceService,
-  ) {}
-
   async syncRoom(voiceChannel: VoiceChannel) {
     if (voiceChannel.guild.afkChannelId === voiceChannel.id) {
       console.log('[Room] The VoiceChannel is AfkChannel.');
@@ -93,15 +83,6 @@ class RoomService implements IRoomService {
         await textChannel.send({
           content: `このチャンネルは${voiceChannel.url}に入っている人だけに表示されます`,
         });
-        await textChannel.send({
-          components: [
-            new ActionRowBuilder<ButtonBuilder>().addComponents([
-              room?.voice
-                ? await VcOffButton.generate()
-                : await VcOnButton.generate(),
-            ]),
-          ],
-        });
       }
 
       console.log(
@@ -111,11 +92,6 @@ class RoomService implements IRoomService {
 
       if (!isVoiceChannelUsed) {
         await textChannel.delete();
-        this.voiceService.disconnect(voiceChannel);
-      } else {
-        if (room?.voice) {
-          this.voiceService.connect(voiceChannel);
-        }
       }
 
       if (!room)

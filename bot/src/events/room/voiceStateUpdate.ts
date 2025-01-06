@@ -6,7 +6,8 @@ import { BotEvent } from '@/types/event';
 import { IMinecraftService } from '@/services/Minecraft';
 
 const roomService = container.resolve<IRoomService>('IRoomService');
-const minecraftService = container.resolve<IMinecraftService>('IMinecraftService');
+const minecraftService =
+  container.resolve<IMinecraftService>('IMinecraftService');
 
 const event: BotEvent = {
   eventName: Events.VoiceStateUpdate,
@@ -21,7 +22,11 @@ const event: BotEvent = {
 
     if (after.channel instanceof VoiceChannel) {
       await roomService.syncRoom(after.channel);
-      if (after.channelId !== after.guild.afkChannelId) await minecraftService.send('といといほー', `🔊${after.channel.name}にメンバーが参加しました`);
+      if (after.channelId !== after.guild.afkChannelId)
+        await minecraftService.send(
+          'といといほー',
+          `🔊${after.channel.name}にメンバーが参加しました`,
+        );
     }
   },
 };
