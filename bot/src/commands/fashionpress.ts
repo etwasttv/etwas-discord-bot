@@ -39,7 +39,8 @@ const command: BotCommand = {
         .replace(/<h\d>(.+?)<\/h\d>/g, '**$1**\n')
         .replace(/<p>(.*?)<\/p>/g, '$1\n')
         .replace(/<br\s*?\/?>/g, '\n')
-        .replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, ''),
+        .replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, '')
+        .split('\n')[0],
     );
     const date = new Date(item.pubDate);
     const thumbnail = item['media:content']['@_url'];
