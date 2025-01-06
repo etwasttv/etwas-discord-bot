@@ -4,7 +4,7 @@ on: [ workflow_dispatch ]
 
 jobs:
   build:
-    if: github.actor == 'etwasttv'
+    if: github.actor == 'etwasttv' && github.ref_name == 'develop'
     runs-on: self-hosted
     defaults:
       run:
