@@ -9,9 +9,14 @@ import {
 
 import fs from 'fs/promises';
 import { BotCommand } from '@/types/command';
-import { container } from 'tsyringe';
+import { container, Lifecycle } from 'tsyringe';
+import { DiscordClient } from '@/core/discord';
 
-container.register('IVoiceService', { useValue: {} });
+container.register(
+  'DiscordClient',
+  { useClass: DiscordClient },
+  { lifecycle: Lifecycle.Singleton },
+);
 container.register('IOmikujiService', { useValue: {} });
 container.register('IRoomService', { useValue: {} });
 container.register('IEmojiService', { useValue: {} });

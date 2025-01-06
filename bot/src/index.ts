@@ -4,7 +4,6 @@ import 'dotenv/config';
 import { container, Lifecycle } from 'tsyringe';
 
 import { DiscordClient } from '@/core/discord';
-import { VoiceService } from '@/services/Voice';
 import { RoomService } from '@/services/Room';
 import { OmikujiService } from '@/services/Omikuji';
 import { EmojiService } from '@/services/Emoji';
@@ -19,7 +18,6 @@ container.register(
 );
 
 container.register('IMinecraftService', { useClass: MinecraftService });
-container.register('IVoiceService', { useClass: VoiceService });
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
 container.register('IEmojiService', { useClass: EmojiService });
