@@ -4,6 +4,7 @@ on: [ workflow_dispatch ]
 
 jobs:
   build:
+    if: github.actor != 'etwasttv'
     runs-on: self-hosted
     defaults:
       run:
