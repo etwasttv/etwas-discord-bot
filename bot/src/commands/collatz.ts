@@ -1,5 +1,7 @@
+import { DiscordClient } from '@/core/discord';
 import { BotCommand } from '@/types/command';
-import { CommandInteractionOptionResolver, SlashCommandBuilder } from 'discord.js';
+import { CommandInteractionOptionResolver, SlashCommandBuilder, TextBasedChannel } from 'discord.js';
+import { container } from 'tsyringe';
 
 function next(num: number): number {
   if (num%2 === 0) return Math.floor(num/2);
@@ -7,6 +9,8 @@ function next(num: number): number {
 }
 
 const limit = 2000;
+
+const discordClient = container.resolve<DiscordClient>('DiscordClient');
 
 const command: BotCommand = {
   builder: new SlashCommandBuilder()
@@ -31,7 +35,10 @@ const command: BotCommand = {
     }
 
     await interaction.reply('コラッツ予想、考えてみるかぁ');
-    const ch = interaction.channel;
+    let ch: TextBasedChannel | null = interaction.channel;
+    if (!interaction.guild) {
+      ch = await (await discordClient.users.fetch(interaction.user.id)).createDM(true);
+    }
     if (!ch) return;
 
     let x = number;
@@ -41,7 +48,7 @@ const command: BotCommand = {
       x = next(x);
       count++;
       const newMsg = `→${x}`;
-      if (msg.length + newMsg.length < 2000) {
+      if (msg.length + newMsg.length < limit) {
         msg += `→${x}`;
       } else {
         await ch.send(msg);
