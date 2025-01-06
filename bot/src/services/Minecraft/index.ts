@@ -12,7 +12,7 @@ class MinecraftService implements IMinecraftService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.MC_API_TOKEN}`
+          Authorization: `Bearer ${process.env.MC_API_TOKEN}`,
         },
         body: JSON.stringify({
           name: sender,

@@ -3,7 +3,8 @@ import { BotEvent } from '@/types/event';
 import { Events, Message } from 'discord.js';
 import { container } from 'tsyringe';
 
-const minecraftService = container.resolve<IMinecraftService>('IMinecraftService');
+const minecraftService =
+  container.resolve<IMinecraftService>('IMinecraftService');
 
 const event: BotEvent = {
   eventName: Events.MessageCreate,
@@ -18,7 +19,7 @@ const event: BotEvent = {
     }
 
     await minecraftService.send(message.author.displayName, message.content);
-  }
-}
+  },
+};
 
 export default event;

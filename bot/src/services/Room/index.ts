@@ -25,9 +25,7 @@ interface IRoomService {
 
 @injectable()
 class RoomService implements IRoomService {
-  constructor(
-    @inject('IVoiceService') private voiceService: IVoiceService,
-  ) {}
+  constructor(@inject('IVoiceService') private voiceService: IVoiceService) {}
 
   async syncRoom(voiceChannel: VoiceChannel) {
     if (voiceChannel.guild.afkChannelId === voiceChannel.id) {
