@@ -1,14 +1,10 @@
 name: Deploy to B590
 
-on:
-  pull_request:
-    branches:
-      - release
-    types: [closed]
+on: [ workflow_dispatch ]
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
+    if: github.actor != 'etwasttv'
     runs-on: self-hosted
     defaults:
       run:
