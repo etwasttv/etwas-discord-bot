@@ -38,7 +38,7 @@ async function generateVoice(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(requestQuery),
+        'Content-Length': requestQuery.length,
       },
     },
     requestQuery,
