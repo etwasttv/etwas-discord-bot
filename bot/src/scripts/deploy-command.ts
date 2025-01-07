@@ -11,10 +11,16 @@ import fs from 'fs/promises';
 import { BotCommand } from '@/types/command';
 import { container, Lifecycle } from 'tsyringe';
 import { DiscordClient } from '@/core/discord';
+import { DriveService } from '@/services/Drive';
 
 container.register(
   'DiscordClient',
   { useClass: DiscordClient },
+  { lifecycle: Lifecycle.Singleton },
+);
+container.register(
+  'IDriveService',
+  { useClass: DriveService },
   { lifecycle: Lifecycle.Singleton },
 );
 container.register('IOmikujiService', { useValue: {} });
