@@ -30,6 +30,9 @@ jobs:
           echo 'MC_API_ENDPOINT="${{ secrets.MC_API_ENDPOINT }}"' >> .env
           echo 'MC_API_TOKEN="${{ secrets.MC_API_TOKEN }}"' >> .env
           echo 'MC_CHAT_CHANNEL="${{ secrets.MC_CHAT_CHANNEL }}"' >> .env
+          echo 'GOOGLE_CLIENT_EMAIL="${{ secrets.GOOGLE_CLIENT_EMAIL }}"' >> .env
+          echo 'GOOGLE_PRIVATE_KEY="${{ secrets.GOOGLE_PRIVATE_KEY }}"' >> .env
+          echo 'PICTURE_FOLDER_ID="${{ secrets.PICTURE_FOLDER_ID }}"' >> .env
       - name: Deploy Application Command
         run: npm run deploy-command
       - run: npx prisma migrate deploy

@@ -10,6 +10,7 @@ import { EmojiService } from '@/services/Emoji';
 import { ITimerService, TimerService } from '@/services/timer';
 import { WikiService } from '@/services/Wiki';
 import { MinecraftService } from '@/services/Minecraft';
+import { DriveService } from '@/services/Drive';
 
 container.register(
   'DiscordClient',
@@ -17,6 +18,11 @@ container.register(
   { lifecycle: Lifecycle.Singleton },
 );
 
+container.register(
+  'IDriveService',
+  { useClass: DriveService },
+  { lifecycle: Lifecycle.Singleton },
+);
 container.register('IMinecraftService', { useClass: MinecraftService });
 container.register('IOmikujiService', { useClass: OmikujiService });
 container.register('IRoomService', { useClass: RoomService });
