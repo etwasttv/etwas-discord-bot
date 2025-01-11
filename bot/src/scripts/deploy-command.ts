@@ -23,6 +23,7 @@ container.register(
   { useClass: DriveService },
   { lifecycle: Lifecycle.Singleton },
 );
+container.register('ICustomResponseService', { useValue: {} });
 container.register('IOmikujiService', { useValue: {} });
 container.register('IRoomService', { useValue: {} });
 container.register('IEmojiService', { useValue: {} });

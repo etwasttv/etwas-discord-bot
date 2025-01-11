@@ -20,7 +20,9 @@ class MinecraftService implements IMinecraftService {
         }),
       });
     } catch (e) {
-      console.error(e);
+      if (e instanceof AggregateError) {
+        console.log('[Minecraft] Cant connect to server');
+      }
     }
   }
 }
