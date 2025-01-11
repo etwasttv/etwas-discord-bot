@@ -44,3 +44,12 @@ model Timer {
   isCanceled   Boolean @default(false)
   scheduledAt  DateTime
 }
+
+model Response {
+  id           String @id @default(uuid())
+  guildId      String
+  keyword      String
+  response     String
+
+  @@unique([guildId, keyword])
+}
