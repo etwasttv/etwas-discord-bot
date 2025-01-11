@@ -5,6 +5,7 @@ import {
   CommandInteractionOptionResolver,
   SlashCommandBuilder,
 } from 'discord.js';
+import streams from 'memory-streams';
 import { container } from 'tsyringe';
 
 const driveService = container.resolve<IDriveService>('IDriveService');
@@ -32,15 +33,18 @@ const command: BotCommand = {
     await interaction.deferReply();
 
     if (action === 'image') {
-      const result = await driveService.pictureGacha();
-      if (!result) {
+      try {
+        const writable = new streams.WritableStream();
+        const name = await driveService.pictureGacha(writable);
+        console.log(`[Drive] ${name}`);
+        await interaction.editReply({
+          files: [new AttachmentBuilder(writable.toBuffer(), { name: name })],
+        });
+      } catch (e) {
+        console.error(e);
         await interaction.editReply('スクリーンショットのストックが無かったよ');
         return;
       }
-
-      await interaction.editReply({
-        files: [new AttachmentBuilder(result.buffer, { name: result.name })],
-      });
     } else {
       await interaction.editReply({
         content: `画像の追加は**[こちら](https://drive.google.com/drive/folders/${process.env.PICTURE_FOLDER_ID})**!`,
