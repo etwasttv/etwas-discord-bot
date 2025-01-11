@@ -1,9 +1,10 @@
 import { drive_v3, google } from 'googleapis';
 import { JWT } from 'googleapis-common';
+import { Writable } from 'stream';
 import { singleton } from 'tsyringe';
 
 interface IDriveService {
-  pictureGacha(): Promise<{ buffer: Buffer; name: string } | null>;
+  pictureGacha(writable: Writable): Promise<string>;
 }
 
 @singleton()
@@ -19,7 +20,7 @@ class DriveService implements IDriveService {
     );
   }
 
-  async pictureGacha() {
+  async pictureGacha(writable: Writable) {
     const driveApi = await this.driveApi();
     const pictures: { id: string; name: string }[] = [];
     let nextPageToken: undefined | string = undefined;
@@ -56,24 +57,34 @@ class DriveService implements IDriveService {
     } while (nextPageToken);
 
     if (pictures.length === 0) {
-      return null;
+      throw new Error('no pictures');
     }
     const rnd = Math.floor(Math.random() * pictures.length);
 
-    const picture = await driveApi.files.get(
-      {
-        fileId: pictures[rnd].id,
-        alt: 'media',
-      },
-      { responseType: 'arraybuffer' },
-    );
-    if (picture.status !== 200) {
-      return null;
-    }
-    return {
-      buffer: Buffer.from(picture.data as ArrayBuffer),
-      name: pictures[rnd].name,
-    };
+    console.log('[Drive] Start Downloading');
+    return await driveApi.files
+      .get(
+        {
+          fileId: pictures[rnd].id,
+          alt: 'media',
+        },
+        { responseType: 'stream' },
+      )
+      .then((res) => {
+        return new Promise<string>((resolve, reject) => {
+          res.data
+            .on('data', (d) => writable.write(d))
+            .on('error', (err) => {
+              console.error('[Drive] Downloading Error');
+              reject(err);
+            })
+            .on('end', () => {
+              writable.end();
+              console.log('[Drive] Finish Downloading');
+              resolve(pictures[rnd].name);
+            });
+        });
+      });
   }
 
   private async driveApi(): Promise<drive_v3.Drive> {
