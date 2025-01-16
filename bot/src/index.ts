@@ -12,6 +12,7 @@ import { WikiService } from '@/services/Wiki';
 import { MinecraftService } from '@/services/Minecraft';
 import { DriveService } from '@/services/Drive';
 import { CustomResponseService } from '@/services/CustomResponse';
+import { PaperService } from '@/services/Paper';
 
 container.register(
   'DiscordClient',
@@ -37,6 +38,7 @@ container.register(
   { lifecycle: Lifecycle.Singleton },
 );
 container.register('IWikiService', { useClass: WikiService });
+container.register('IPaperService', { useClass: PaperService });
 
 const discordClient = container.resolve<DiscordClient>('DiscordClient');
 
