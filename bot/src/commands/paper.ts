@@ -16,11 +16,22 @@ const command: BotCommand = {
 
     const version = await service.getLatestBuild();
     console.log(version);
+    if (!version) {
+      await interaction.editReply('取得失敗');
+      return;
+    }
+
+    let msg = `Paperの最新の成功ビルドはMinecraft${version?.mcVersion}Build${version?.buildNumber}です\n`;
+    msg += `ダウンロードコマンド: \`${getCommand(version?.mcVersion, version?.buildNumber)}\``;
 
     await interaction.editReply({
-      content: `Paperの最新の成功ビルドはMinecraft${version?.mcVersion}Build${version?.buildNumber}です`,
+      content: msg,
     });
   },
 };
+
+function getCommand(mcVersion: string, buildNum: string) {
+  return `wget https://api.papermc.io/v2/projects/paper/versions/${mcVersion}/builds/${buildNum}}/downloads/paper-${mcVersion}-${buildNum}.jar`;
+}
 
 export default command;
