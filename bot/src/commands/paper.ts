@@ -31,7 +31,7 @@ const command: BotCommand = {
 };
 
 function getCommand(mcVersion: string, buildNum: string) {
-  return `wget https://api.papermc.io/v2/projects/paper/versions/${mcVersion}/builds/${buildNum}}/downloads/paper-${mcVersion}-${buildNum}.jar`;
+  return `wget https://api.papermc.io/v2/projects/paper/versions/${mcVersion}/builds/${buildNum}/downloads/paper-${mcVersion}-${buildNum}.jar`;
 }
 
 export default command;
